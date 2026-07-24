@@ -1,5 +1,5 @@
 [phases.install]
-cmds = ["pnpm install --no-frozen-lockfile"]
+cmds = ["pnpm install --no-frozen-lockfile --prod=false"]
 
 [phases.build]
 cmds = ["node artifacts/api-server/build.mjs"]
