@@ -2,6 +2,9 @@
 builder = "NIXPACKS"
 buildCommand = "pnpm install --no-frozen-lockfile && node artifacts/api-server/build.mjs"
 
+[build.nixpacksPlan.phases.setup]
+nixPkgs = ["nodejs_20", "pnpm"]
+
 [deploy]
 startCommand = "node --enable-source-maps artifacts/api-server/dist/index.mjs"
 restartPolicyType = "ON_FAILURE"

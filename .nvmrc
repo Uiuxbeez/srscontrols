@@ -1,0 +1,4 @@
+echo "20" > .nvmrc
+git add .nvmrc package.json
+git commit -m "Pin Node.js version to 20 for Railway build"
+git push
