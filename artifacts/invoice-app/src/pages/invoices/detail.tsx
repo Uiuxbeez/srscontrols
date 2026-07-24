@@ -232,22 +232,17 @@ export default function InvoiceDetail() {
         </div>
 
         {/* ══ 3. BILL TO ══ */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", borderBottom: `1px solid ${COL.border}` }}>
-          <div style={{ padding: "16px 32px", borderRight: `1px solid ${COL.border}` }}>
-            <div style={{ fontSize: "11px", fontWeight: 600, color: COL.label, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "8px" }}>
-              Bill To
-            </div>
-            <div style={{ fontWeight: 700, fontSize: "14px", marginBottom: "4px" }}>{invoice.client.name}</div>
-            <div style={{ color: COL.label, fontSize: "12px", lineHeight: 1.65, whiteSpace: "pre-wrap" }}>{invoice.client.address}</div>
-            <div style={{ fontSize: "12px", marginTop: "6px" }}>
-              <span style={{ color: COL.label }}>GSTIN/UIN: </span>{invoice.client.gstin || "—"}
-            </div>
-            <div style={{ fontSize: "12px" }}>
-              <span style={{ color: COL.label }}>State: </span>Tamil Nadu &nbsp;|&nbsp; <span style={{ color: COL.label }}>Code: </span>33
-            </div>
+        <div style={{ borderBottom: `1px solid ${COL.border}`, padding: "16px 32px" }}>
+          <div style={{ fontSize: "11px", fontWeight: 600, color: COL.label, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "8px" }}>
+            Bill To
           </div>
-          <div style={{ padding: "16px 32px" }}>
-            {/* Right side of Bill To is left empty — matches Zoho style for single billing address */}
+          <div style={{ fontWeight: 700, fontSize: "14px", marginBottom: "4px" }}>{invoice.client.name}</div>
+          <div style={{ color: COL.label, fontSize: "12px", lineHeight: 1.65, whiteSpace: "pre-wrap" }}>{invoice.client.address}</div>
+          <div style={{ fontSize: "12px", marginTop: "6px" }}>
+            <span style={{ color: COL.label }}>GSTIN/UIN: </span>{invoice.client.gstin || "—"}
+          </div>
+          <div style={{ fontSize: "12px" }}>
+            <span style={{ color: COL.label }}>State: </span>Tamil Nadu &nbsp;|&nbsp; <span style={{ color: COL.label }}>Code: </span>33
           </div>
         </div>
 
