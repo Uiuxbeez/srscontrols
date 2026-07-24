@@ -1,8 +1,8 @@
 [phases.install]
-cmds = ["pnpm install --no-frozen-lockfile"]
+cmds = ["pnpm install --no-frozen-lockfile --prod=false"]
 
 [phases.build]
-cmds = ["node artifacts/api-server/build.mjs"]
+cmds = ["cd /app/artifacts/api-server && node build.mjs"]
 
 [start]
-cmd = "node --enable-source-maps artifacts/api-server/dist/index.mjs"
+cmd = "node --enable-source-maps /app/artifacts/api-server/dist/index.mjs"
