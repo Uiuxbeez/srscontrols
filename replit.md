@@ -1,36 +1,46 @@
-# [Project name]
+# SRS Invoice Manager
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+A full-stack invoice management app for SRS Controls. Create clients, issue invoices, and track revenue — all in one place.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- **Frontend** (webview, port 5000): `PORT=5000 BASE_PATH=/ pnpm --filter @workspace/invoice-app dev`
+- **API server** (console, port 3001): `PORT=3001 pnpm --filter @workspace/api-server dev`
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
+- `pnpm --filter @workspace/db run push` — push DB schema changes to dev database (Drizzle)
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
-
-## Stack
-
-- pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
-- DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/api-server/` — Express 5 backend (builds with esbuild, runs on port 3001)
+- `artifacts/invoice-app/` — React + Vite frontend (runs on port 5000, proxies `/api` → port 3001)
+- `lib/db/` — Drizzle schema (`src/schema/`), drizzle.config.ts — source of truth for DB shape
+- `lib/api-spec/` — OpenAPI spec (`openapi.yaml`) — source of truth for API contracts
+- `lib/api-client-react/` — generated React Query hooks (run codegen to regenerate)
+- `lib/api-zod/` — generated Zod schemas (run codegen to regenerate)
+
+## Stack
+
+- pnpm workspaces, Node.js 20, TypeScript 5.9
+- Frontend: React 18, Vite, TailwindCSS, shadcn/ui, React Query, Wouter
+- API: Express 5, Drizzle ORM, Zod (`zod/v4`)
+- DB: PostgreSQL (Replit managed) + Drizzle ORM
+- Codegen: Orval (OpenAPI → TypeScript hooks + Zod schemas)
+- Build: esbuild (CJS bundle for API server)
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- The Vite dev server proxies `/api/*` to `http://localhost:3001` — no hardcoded API URLs in the frontend.
+- `DATABASE_URL` is injected automatically by Replit at runtime — never set it in `.env`.
+- `SESSION_SECRET` is stored as a Replit Secret.
+- The API server does a full esbuild compile on each `dev` start — changes require a workflow restart.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Dashboard: revenue totals and recent invoices at a glance
+- Clients: create and manage client records
+- Invoices: create, edit, view, and print/export invoices as PDF (via browser print)
 
 ## User preferences
 
@@ -38,7 +48,9 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- After editing API server code, restart the **API Server** workflow (it doesn't hot-reload — it rebuilds with esbuild on each start).
+- After editing frontend code, Vite hot-reloads automatically — no restart needed.
+- Always run `pnpm --filter @workspace/db run push` after changing `lib/db/src/schema/` to apply schema changes to the dev database.
 
 ## Pointers
 
