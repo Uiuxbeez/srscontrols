@@ -11,6 +11,9 @@ import ClientForm from '@/pages/clients/form';
 import InvoicesList from '@/pages/invoices/list';
 import InvoiceForm from '@/pages/invoices/form';
 import InvoiceDetail from '@/pages/invoices/detail';
+import QuotationsList from '@/pages/quotations/list';
+import QuotationForm from '@/pages/quotations/form';
+import QuotationDetail from '@/pages/quotations/detail';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,6 +40,12 @@ function Router() {
         <Route path="/invoices/new" component={InvoiceForm} />
         <Route path="/invoices/:id" component={InvoiceDetail} />
         <Route path="/invoices/:id/edit" component={InvoiceForm} />
+
+        {/* Quotations */}
+        <Route path="/quotations" component={QuotationsList} />
+        <Route path="/quotations/new" component={QuotationForm} />
+        <Route path="/quotations/:id/edit" component={QuotationForm} />
+        <Route path="/quotations/:id" component={QuotationDetail} />
         
         <Route component={NotFound} />
       </Switch>

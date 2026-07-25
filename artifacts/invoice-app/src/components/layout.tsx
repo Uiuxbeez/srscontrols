@@ -4,8 +4,7 @@ import {
   LayoutDashboard, 
   FileText, 
   Users, 
-  Settings,
-  Menu
+  ClipboardList,
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -16,6 +15,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const navItems = [
     { label: "Dashboard", href: "/", icon: LayoutDashboard },
     { label: "Invoices", href: "/invoices", icon: FileText },
+    { label: "Quotations", href: "/quotations", icon: ClipboardList },
     { label: "Clients", href: "/clients", icon: Users },
   ];
 
