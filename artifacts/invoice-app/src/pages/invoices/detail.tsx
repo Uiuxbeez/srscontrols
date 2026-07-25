@@ -76,7 +76,7 @@ export default function InvoiceDetail() {
     }, {}),
   )
 
-  const fillerRows = Math.max(0, 5 - invoice.items.length)
+  const fillerRows = Math.max(0, 1 - invoice.items.length)
 
   return (
     <div className="space-y-6">
@@ -260,7 +260,7 @@ export default function InvoiceDetail() {
           <thead>
             <tr style={{ backgroundColor: COL.header, color: COL.headerText }}>
               <th style={{ padding: "10px 8px", textAlign: "center", fontWeight: 600, fontSize: "12px" }}>#</th>
-              <th style={{ padding: "10px 8px", textAlign: "left", fontWeight: 600, fontSize: "12px" }}>Item &amp; Description</th>
+              <th style={{ padding: "10px 8px", textAlign: "left", fontWeight: 600, fontSize: "12px" }}>Item &amp; Descriptions</th>
               <th style={{ padding: "10px 8px", textAlign: "center", fontWeight: 600, fontSize: "12px" }}>HSN/SAC</th>
               <th style={{ padding: "10px 8px", textAlign: "right", fontWeight: 600, fontSize: "12px" }}>Qty</th>
               <th style={{ padding: "10px 8px", textAlign: "right", fontWeight: 600, fontSize: "12px" }}>Rate</th>
@@ -353,7 +353,7 @@ export default function InvoiceDetail() {
         </div>
 
         {/* ══ 6. HSN TAX SUMMARY ══ */}
-        <div style={{ borderTop: `1px solid ${COL.border}`, padding: "0" }}>
+        <div style={{ borderTop: `1px solid ${COL.border}`, padding: "0", display: "none" }}>
           <div style={{ padding: "8px 32px 4px", fontSize: "11px", fontWeight: 600, color: COL.label, textTransform: "uppercase", letterSpacing: "0.05em" }}>
             Tax Analysis
           </div>

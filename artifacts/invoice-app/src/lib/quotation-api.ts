@@ -1,3 +1,4 @@
+import { customFetch } from "@workspace/api-client-react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 
 /* ─── Types ─── */
@@ -90,16 +91,15 @@ export const quotationKeys = {
 }
 
 /* ─── API fetch helper ─── */
+
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(path, {
-    headers: { "Content-Type": "application/json" },
+  return customFetch<T>(path, {
     ...init,
+    headers: {
+      "Content-Type": "application/json",
+      ...(init?.headers as Record<string, string> | undefined),
+    },
   })
-  if (!res.ok) {
-    const body = await res.text()
-    throw new Error(body || `HTTP ${res.status}`)
-  }
-  return res.json() as Promise<T>
 }
 
 /* ─── Hooks ─── */
