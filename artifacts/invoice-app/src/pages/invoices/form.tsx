@@ -330,6 +330,9 @@ export default function InvoiceForm() {
               <FormField control={form.control} name="despatchDocNo" render={({ field }) => (
                 <FormItem><FormLabel>Despatch Doc No.</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>
               )} />
+              <FormField control={form.control} name="despatchDocDate" render={({ field }) => (
+                <FormItem><FormLabel>Delivery Note Date</FormLabel><FormControl><Input type="date" {...field} /></FormControl></FormItem>
+              )} />
               <FormField control={form.control} name="despatchedThrough" render={({ field }) => (
                 <FormItem><FormLabel>Despatched through</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>
               )} />
