@@ -35,11 +35,12 @@ const COL = {
 const COMPANY = {
   name: "SRS CONTROLS",
   tagline: "Manufacturers of: Electric Control Panels",
-  addressLines: ["New No. 97, Sanganoor Road, Ganapathy,", "Coimbatore – 641 006"],
-  gstin: "33AKQPS9506E1ZH",
+  addressLines: ["100/2, Kurudampalayam Village, K.Vadamadurai, Thudiyalur, Coimbatore – 641017"],
+  gstin: "33AYQPK2144P1ZZ",
   stateCode: "33",
-  email: "srscontrolscbe@gmail.com",
-  phone: "+91 98765 43210",
+  email: "srscontrols2012@gmail.com",
+  website: "www.srscontrols.com",
+  phone: "+91 9843589524",
 }
 
 const BANK_DETAILS = {
@@ -209,6 +210,9 @@ export default function InvoiceDetail() {
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                     <Mail size={13} color={COL.header} /> {COMPANY.email}
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <Landmark size={13} color={COL.header} /> {COMPANY.website}
                   </div>
                   <div style={{ marginTop: "3px", fontWeight: 800 }}>
                     GST No.: {COMPANY.gstin} &nbsp;|&nbsp; State Code: {COMPANY.stateCode}
