@@ -450,6 +450,7 @@ export default function InvoiceDetail() {
               <div style={{ fontSize: "12px", lineHeight: 1.9, fontWeight: 600 }}>
                 {[
                   ["Bank Name", BANK_DETAILS.bankName],
+                  ["Account Name", BANK_DETAILS.accountName],
                   ["A/c No.", BANK_DETAILS.accountNo],
                   ["Branch", BANK_DETAILS.branch],
                   ["IFS Code", BANK_DETAILS.ifsc],
