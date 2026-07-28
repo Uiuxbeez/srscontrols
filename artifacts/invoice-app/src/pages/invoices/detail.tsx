@@ -189,7 +189,7 @@ export default function InvoiceDetail() {
         <div style={{ position: "relative", zIndex: 1 }}>
 
           {/* ══ 1. HEADER: reference-style title, company block, and QR ══ */}
-          <div style={{ position: "relative", padding: "16px 32px 20px", borderBottom: `1px solid ${COL.border}` }}>
+          <div style={{ position: "relative", padding: "10px 10px 10px", borderBottom: `1px solid ${COL.border}` }}>
 
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "24px", paddingTop: "0px" }}>
               <div style={{ display: "flex", gap: "16px", alignItems: "flex-start", minWidth: 0 }}>
@@ -312,14 +312,14 @@ export default function InvoiceDetail() {
             </colgroup>
             <thead>
               <tr style={{ backgroundColor: COL.header, color: COL.headerText }}>
-                <th style={{ padding: "10px 8px", textAlign: "center", fontWeight: 800, fontSize: "12px", borderRight: "1px solid rgba(255,255,255,0.25)" }}>S.No.</th>
-                <th style={{ padding: "10px 8px", textAlign: "center", fontWeight: 800, fontSize: "12px", borderRight: "1px solid rgba(255,255,255,0.25)" }}>Description</th>
-                <th style={{ padding: "10px 8px", textAlign: "center", fontWeight: 800, fontSize: "12px", borderRight: "1px solid rgba(255,255,255,0.25)" }}>HSN</th>
-                <th style={{ padding: "10px 8px", textAlign: "center", fontWeight: 800, fontSize: "12px", borderRight: "1px solid rgba(255,255,255,0.25)" }}>GST%</th>
-                <th style={{ padding: "10px 8px", textAlign: "center", fontWeight: 800, fontSize: "12px", borderRight: "1px solid rgba(255,255,255,0.25)" }}>Quantity</th>
-                <th style={{ padding: "10px 8px", textAlign: "right", fontWeight: 800, fontSize: "12px", borderRight: "1px solid rgba(255,255,255,0.25)" }}>Rate</th>
-                <th style={{ padding: "10px 8px", textAlign: "center", fontWeight: 800, fontSize: "12px", borderRight: "1px solid rgba(255,255,255,0.25)" }}>Disc%</th>
-                <th style={{ padding: "10px 10px 10px 8px", textAlign: "right", fontWeight: 800, fontSize: "12px" }}>Amount (₹)</th>
+                <th style={{ padding: "5px 5px", textAlign: "center", fontWeight: 800, fontSize: "12px", borderRight: "1px solid rgba(255,255,255,0.25)" }}>S.No.</th>
+                <th style={{ padding: "5px 5px", textAlign: "center", fontWeight: 800, fontSize: "12px", borderRight: "1px solid rgba(255,255,255,0.25)" }}>Description</th>
+                <th style={{ padding: "5px 5px", textAlign: "center", fontWeight: 800, fontSize: "12px", borderRight: "1px solid rgba(255,255,255,0.25)" }}>HSN</th>
+                <th style={{ padding: "5px 5px", textAlign: "center", fontWeight: 800, fontSize: "12px", borderRight: "1px solid rgba(255,255,255,0.25)" }}>GST%</th>
+                <th style={{ padding: "5px 5px", textAlign: "center", fontWeight: 800, fontSize: "12px", borderRight: "1px solid rgba(255,255,255,0.25)" }}>Quantity</th>
+                <th style={{ padding: "5px 5px", textAlign: "right", fontWeight: 800, fontSize: "12px", borderRight: "1px solid rgba(255,255,255,0.25)" }}>Rate</th>
+                <th style={{ padding: "5px 5px", textAlign: "center", fontWeight: 800, fontSize: "12px", borderRight: "1px solid rgba(255,255,255,0.25)" }}>Disc%</th>
+                <th style={{ padding: "10px 10px 5px 5px", textAlign: "right", fontWeight: 800, fontSize: "12px" }}>Amount (₹)</th>
               </tr>
             </thead>
             <tbody>
@@ -328,16 +328,16 @@ export default function InvoiceDetail() {
                   key={item.id}
                   style={{ backgroundColor: "#fff" }}
                 >
-                  <td style={{ padding: "10px 8px", textAlign: "center", fontSize: "12px", verticalAlign: "top", borderRight: `1px solid ${COL.softBorder}`, borderBottom: `1px solid ${COL.softBorder}` }}>{item.sNo}</td>
+                  <td style={{ padding: "5px 5px", textAlign: "center", fontSize: "12px", verticalAlign: "top", borderRight: `1px solid ${COL.softBorder}`, borderBottom: `1px solid ${COL.softBorder}` }}>{item.sNo}</td>
                   <td style={{ padding: "10px 12px", verticalAlign: "top", borderRight: `1px solid ${COL.softBorder}`, borderBottom: `1px solid ${COL.softBorder}` }}>
                     <div style={{ fontWeight: 500 }}>{item.description}</div>
                   </td>
-                  <td style={{ padding: "10px 8px", textAlign: "center", fontSize: "12px", verticalAlign: "top", borderRight: `1px solid ${COL.softBorder}`, borderBottom: `1px solid ${COL.softBorder}` }}>{item.hsnSac || "—"}</td>
-                  <td style={{ padding: "10px 8px", textAlign: "center", fontSize: "12px", verticalAlign: "top", borderRight: `1px solid ${COL.softBorder}`, borderBottom: `1px solid ${COL.softBorder}` }}>{invoice.cgstRate + invoice.sgstRate}</td>
-                  <td style={{ padding: "10px 8px", textAlign: "center", verticalAlign: "top", borderRight: `1px solid ${COL.softBorder}`, borderBottom: `1px solid ${COL.softBorder}` }}>{item.qty ?? "—"} {item.per || ""}</td>
-                  <td style={{ padding: "10px 8px", textAlign: "right", verticalAlign: "top", borderRight: `1px solid ${COL.softBorder}`, borderBottom: `1px solid ${COL.softBorder}` }}>{item.rate != null ? formatAmount(item.rate) : "—"}</td>
-                  <td style={{ padding: "10px 8px", textAlign: "center", verticalAlign: "top", borderRight: `1px solid ${COL.softBorder}`, borderBottom: `1px solid ${COL.softBorder}` }}>—</td>
-                  <td style={{ padding: "10px 10px 10px 8px", textAlign: "right", fontWeight: 700, verticalAlign: "top", borderBottom: `1px solid ${COL.softBorder}` }}>{formatAmount(item.amount)}</td>
+                  <td style={{ padding: "5px 5px", textAlign: "center", fontSize: "12px", verticalAlign: "top", borderRight: `1px solid ${COL.softBorder}`, borderBottom: `1px solid ${COL.softBorder}` }}>{item.hsnSac || "—"}</td>
+                  <td style={{ padding: "5px 5px", textAlign: "center", fontSize: "12px", verticalAlign: "top", borderRight: `1px solid ${COL.softBorder}`, borderBottom: `1px solid ${COL.softBorder}` }}>{invoice.cgstRate + invoice.sgstRate}</td>
+                  <td style={{ padding: "5px 5px", textAlign: "center", verticalAlign: "top", borderRight: `1px solid ${COL.softBorder}`, borderBottom: `1px solid ${COL.softBorder}` }}>{item.qty ?? "—"} {item.per || ""}</td>
+                  <td style={{ padding: "5px 5px", textAlign: "right", verticalAlign: "top", borderRight: `1px solid ${COL.softBorder}`, borderBottom: `1px solid ${COL.softBorder}` }}>{item.rate != null ? formatAmount(item.rate) : "—"}</td>
+                  <td style={{ padding: "5px 5px", textAlign: "center", verticalAlign: "top", borderRight: `1px solid ${COL.softBorder}`, borderBottom: `1px solid ${COL.softBorder}` }}>—</td>
+                  <td style={{ padding: "10px 10px 5px 5px", textAlign: "right", fontWeight: 700, verticalAlign: "top", borderBottom: `1px solid ${COL.softBorder}` }}>{formatAmount(item.amount)}</td>
                 </tr>
               ))}
               {Array.from({ length: fillerRows }).map((_, i) => (
