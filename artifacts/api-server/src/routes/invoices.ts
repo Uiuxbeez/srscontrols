@@ -13,6 +13,41 @@ import { computeInvoiceTotals } from "../lib/amountInWords";
 
 const router: IRouter = Router();
 
+// GET /invoices/:id/pdf - render invoice page and return a PDF
+router.get("/invoices/:id/pdf", async (req, res): Promise<void> => {
+  const id = Number(req.params["id"])
+  if (!Number.isFinite(id)) {
+    res.status(400).json({ error: "Invalid id" })
+    return
+  }
+
+  const invoice = await fetchFullInvoice(id)
+  if (!invoice) {
+    res.status(404).json({ error: "Invoice not found" })
+    return
+  }
+
+  try {
+    // lazily import puppeteer to avoid startup cost when not used
+    const puppeteer = await import("puppeteer")
+    const FRONTEND_BASE = process.env.FRONTEND_BASE_URL || "http://localhost:5173"
+    const target = `${FRONTEND_BASE.replace(/\/$/, "")}/invoices/${id}?pdfRender=1`
+
+    const browser = await puppeteer.launch({ args: ["--no-sandbox", "--disable-setuid-sandbox"] })
+    const page = await browser.newPage()
+    await page.goto(target, { waitUntil: "networkidle0" })
+    const pdfBuffer = await page.pdf({ format: "A4", printBackground: true })
+    await browser.close()
+
+    res.setHeader("Content-Type", "application/pdf")
+    res.setHeader("Content-Disposition", `attachment; filename="invoice-${invoice.invoiceNo}.pdf"`)
+    res.send(pdfBuffer)
+  } catch (err) {
+    console.error("PDF generation failed:", err)
+    res.status(500).json({ error: "Failed to generate PDF" })
+  }
+})
+
 // GET /invoices/stats
 router.get("/invoices/stats", async (req, res): Promise<void> => {
   const now = new Date();

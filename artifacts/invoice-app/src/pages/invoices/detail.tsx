@@ -92,7 +92,9 @@ export default function InvoiceDetail() {
     if (typeof window === "undefined") return
     const params = new URLSearchParams(window.location.search)
     const shouldPrint = params.get("print") === "1" || params.get("print") === "true"
-    if (shouldPrint) {
+    const isPdfRender = params.get("pdfRender") === "1" || params.get("pdf") === "1"
+    // only auto-open print dialog for interactive prints; skip when page is being rendered for PDF
+    if (shouldPrint && !isPdfRender) {
       setTimeout(() => window.print(), 300)
     }
   }, [invoice])
@@ -155,6 +157,13 @@ export default function InvoiceDetail() {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+          <Button variant="outline" onClick={() => {
+            if (typeof window === 'undefined') return
+            const url = `${window.location.origin}${import.meta.env.BASE_URL}invoices/${id}?print=1&copy=duplicate`
+            window.open(url, '_blank')
+          }}>
+            <Printer className="w-4 h-4 mr-2" /> Duplicate Copy
+          </Button>
           <Button variant="outline" asChild>
             <Link href={`/invoices/${id}/edit`}><Edit className="w-4 h-4 mr-2" /> Edit</Link>
           </Button>
@@ -235,12 +244,14 @@ export default function InvoiceDetail() {
 
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px", flexShrink: 0 }}>
                 <div style={{ alignSelf: "flex-end", color: COL.value, fontSize: "12px", fontWeight: 800 }}>
-                  (ORIGINAL FOR RECIPIENT)
+                  {typeof window !== "undefined" && new URLSearchParams(window.location.search).get("copy") === "duplicate"
+                    ? "(DUPLICATE COPY)"
+                    : "(ORIGINAL FOR RECIPIENT)"}
                 </div>
-                <div style={{ color: COL.header, fontSize: "13px", fontWeight: 800 }}>e-Invoice</div>
+                <div style={{ color: COL.header, fontSize: "13px", fontWeight: 800 }}>Invoice</div>
                 <div style={{ border: `1.5px solid ${COL.header}`, padding: "7px", backgroundColor: "#fff" }}>
                   <QRCodeSVG
-                    value={typeof window !== "undefined" ? `${window.location.origin}${import.meta.env.BASE_URL}invoices/${id}?print=1` : `invoices/${id}?print=1`}
+                    value={typeof window !== "undefined" ? `${window.location.origin}/api/invoices/${id}/pdf` : `/api/invoices/${id}/pdf`}
                     size={94}
                     level="M"
                     includeMargin={false}
