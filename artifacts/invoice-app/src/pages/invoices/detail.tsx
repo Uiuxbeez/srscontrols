@@ -1,5 +1,6 @@
 import { useGetInvoice, useDeleteInvoice, getListInvoicesQueryKey } from "@workspace/api-client-react"
 import { useParams, useLocation, Link } from "wouter"
+import { useEffect } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -86,6 +87,16 @@ export default function InvoiceDetail() {
     })
   }
 
+  useEffect(() => {
+    if (!invoice) return
+    if (typeof window === "undefined") return
+    const params = new URLSearchParams(window.location.search)
+    const shouldPrint = params.get("print") === "1" || params.get("print") === "true"
+    if (shouldPrint) {
+      setTimeout(() => window.print(), 300)
+    }
+  }, [invoice])
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -96,6 +107,7 @@ export default function InvoiceDetail() {
   }
 
   if (!invoice) return <div>Invoice not found</div>
+
 
   /* ── derived values ── */
   const hsnGroups = Object.entries(
@@ -228,7 +240,7 @@ export default function InvoiceDetail() {
                 <div style={{ color: COL.header, fontSize: "13px", fontWeight: 800 }}>e-Invoice</div>
                 <div style={{ border: `1.5px solid ${COL.header}`, padding: "7px", backgroundColor: "#fff" }}>
                   <QRCodeSVG
-                    value={typeof window !== "undefined" ? window.location.href : `invoices/${id}`}
+                    value={typeof window !== "undefined" ? `${window.location.origin}${import.meta.env.BASE_URL}invoices/${id}?print=1` : `invoices/${id}?print=1`}
                     size={94}
                     level="M"
                     includeMargin={false}
