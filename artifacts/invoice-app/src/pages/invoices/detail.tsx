@@ -247,15 +247,16 @@ export default function InvoiceDetail() {
               <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "9px 14px", color: COL.label, fontSize: "13px", fontWeight: 800, textTransform: "uppercase", backgroundColor: COL.panelBg, borderBottom: `1px solid ${COL.softBorder}` }}>
                 <UserRound size={16} /> Bill To
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "0.9fr 1.35fr", gap: "16px", padding: "12px 14px 14px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "0.9fr 1.35fr", gap: "14px", padding: "7px 7px 7px" }}>
                 <div>
                   <div style={{ fontWeight: 800, fontSize: "14px", marginBottom: "8px" }}>{invoice.client.name}</div>
                   <div style={{ fontSize: "12.5px", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{invoice.client.address}</div>
                   {invoice.client.phone && <div style={{ fontSize: "12.5px", lineHeight: 1.6 }}>M.{invoice.client.phone}</div>}
                   <div style={{ fontSize: "12.5px", lineHeight: 1.6 }}>Tamil Nadu, Code : 33</div>
                   <div style={{ fontSize: "12.5px", lineHeight: 1.6, fontWeight: 700 }}>GST No. : {invoice.client.gstin || "-"}</div>
-                  <div style={{ marginTop: "12px", padding: "9px 11px", backgroundColor: COL.panelBg, borderLeft: `3px solid ${COL.header}`, color: COL.label, fontSize: "12px", lineHeight: 1.45, fontWeight: 700 }}>
-                    Welcome to SRS Controls. Thank you for trusting us with your control panel requirements.
+                  <div style={{ marginTop: "12px", padding: "9px 11px", backgroundColor: "#fff", borderLeft: `3px solid ${COL.header}`, color: COL.label, fontSize: "12px", lineHeight: 1.45, fontWeight: 700 }}>
+                    <div style={{ fontWeight: 900, marginBottom: "6px", textTransform: "uppercase" }}>Delivery Address</div>
+                    <div style={{ whiteSpace: "pre-wrap", fontWeight: 700 }}>{invoice.workSite || invoice.destination || "-"}</div>
                   </div>
                 </div>
                 <div>
@@ -270,7 +271,6 @@ export default function InvoiceDetail() {
                       ["Supplier's Ref.", invoice.suppliersRef || "-"],
                       ["Despatched through", invoice.despatchedThrough || "-"],
                       ["Buyer's Order No.", invoice.buyersOrderNo || "-"],
-                      ["Destination", invoice.destination || "-"],
                     ].map(([label, value], index) => (
                       <div key={label} style={{ display: "grid", gridTemplateColumns: "50% 1fr", minHeight: "28px", borderRight: index % 2 === 0 ? `1px solid ${COL.softBorder}` : "none", borderBottom: index < 8 ? `1px solid ${COL.softBorder}` : "none" }}>
                         <div style={{ display: "flex", alignItems: "center", padding: "3px 7px", color: COL.label, fontSize: "11.5px", fontWeight: 700, backgroundColor: COL.panelBg }}>
