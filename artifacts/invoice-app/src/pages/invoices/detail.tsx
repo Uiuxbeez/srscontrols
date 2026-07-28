@@ -43,10 +43,11 @@ const COMPANY = {
 }
 
 const BANK_DETAILS = {
-  bankName: "Bank of Baroda – CC A/c",
-  accountNo: "28760500001268",
-  branch: "RS Puram & Sastri Road",
-  ifsc: "BARB0CMRABS",
+  bankName: "KARUR VYSYA BANK",
+  accountName: "SRS CONTROLS",
+  accountNo: "1721223000000070",
+  branch: "Thudiyalur",
+  ifsc: "KVBL0001721",
 }
 
 const TERMS = [
