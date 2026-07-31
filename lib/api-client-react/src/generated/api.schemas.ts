@@ -49,6 +49,59 @@ export interface ClientUpdate {
   email?: string;
 }
 
+export interface Panel {
+  id: number;
+  name: string;
+  breakdownText: string;
+  panelSize: string;
+  price: number;
+  defaultQty: number;
+  createdAt?: string;
+}
+
+export interface PanelInput {
+  /** @minLength 1 */
+  name: string;
+  breakdownText?: string;
+  panelSize?: string;
+  /** @minimum 0 */
+  price?: number;
+  /** @minimum 1 */
+  defaultQty?: number;
+}
+
+export interface PanelUpdate {
+  /** @minLength 1 */
+  name?: string;
+  breakdownText?: string;
+  panelSize?: string;
+  /** @minimum 0 */
+  price?: number;
+  /** @minimum 1 */
+  defaultQty?: number;
+}
+
+export interface TechSpecItem {
+  id: number;
+  itemName: string;
+  defaultSpec: string;
+  createdAt?: string;
+}
+
+export interface TechSpecItemInput {
+  /** @minLength 1 */
+  itemName: string;
+  /** @minLength 1 */
+  defaultSpec: string;
+}
+
+export interface TechSpecItemUpdate {
+  /** @minLength 1 */
+  itemName?: string;
+  /** @minLength 1 */
+  defaultSpec?: string;
+}
+
 export interface InvoiceItem {
   id: number;
   invoiceId: number;

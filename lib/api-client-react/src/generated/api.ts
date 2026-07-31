@@ -32,7 +32,13 @@ import type {
   InvoiceUpdate,
   ListInvoicesParams,
   NextInvoiceNumber,
-  SuccessResponse
+  Panel,
+  PanelInput,
+  PanelUpdate,
+  SuccessResponse,
+  TechSpecItem,
+  TechSpecItemInput,
+  TechSpecItemUpdate
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -505,6 +511,742 @@ export const useDeleteClient = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getDeleteClientMutationOptions(options));
+    }
+
+export const getListPanelsUrl = () => {
+
+
+
+
+  return `/api/panels`
+}
+
+/**
+ * @summary List all panels
+ */
+export const listPanels = async ( options?: RequestInit): Promise<Panel[]> => {
+
+  return customFetch<Panel[]>(getListPanelsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListPanelsQueryKey = () => {
+    return [
+    `/api/panels`
+    ] as const;
+    }
+
+
+export const getListPanelsQueryOptions = <TData = Awaited<ReturnType<typeof listPanels>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listPanels>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListPanelsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listPanels>>> = ({ signal }) => listPanels({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listPanels>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListPanelsQueryResult = NonNullable<Awaited<ReturnType<typeof listPanels>>>
+export type ListPanelsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List all panels
+ */
+
+export function useListPanels<TData = Awaited<ReturnType<typeof listPanels>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listPanels>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListPanelsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreatePanelUrl = () => {
+
+
+
+
+  return `/api/panels`
+}
+
+/**
+ * @summary Create a panel
+ */
+export const createPanel = async (panelInput: PanelInput, options?: RequestInit): Promise<Panel> => {
+
+  return customFetch<Panel>(getCreatePanelUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(panelInput)
+  }
+);}
+
+
+
+
+
+export const getCreatePanelMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPanel>>, TError,{data: BodyType<PanelInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createPanel>>, TError,{data: BodyType<PanelInput>}, TContext> => {
+
+const mutationKey = ['createPanel'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createPanel>>, {data: BodyType<PanelInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createPanel(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreatePanelMutationResult = NonNullable<Awaited<ReturnType<typeof createPanel>>>
+    export type CreatePanelMutationBody = BodyType<PanelInput>
+    export type CreatePanelMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Create a panel
+ */
+export const useCreatePanel = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPanel>>, TError,{data: BodyType<PanelInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createPanel>>,
+        TError,
+        {data: BodyType<PanelInput>},
+        TContext
+      > => {
+      return useMutation(getCreatePanelMutationOptions(options));
+    }
+
+export const getGetPanelUrl = (id: number,) => {
+
+
+
+
+  return `/api/panels/${id}`
+}
+
+/**
+ * @summary Get a panel by ID
+ */
+export const getPanel = async (id: number, options?: RequestInit): Promise<Panel> => {
+
+  return customFetch<Panel>(getGetPanelUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetPanelQueryKey = (id: number,) => {
+    return [
+    `/api/panels/${id}`
+    ] as const;
+    }
+
+
+export const getGetPanelQueryOptions = <TData = Awaited<ReturnType<typeof getPanel>>, TError = ErrorType<ErrorResponse>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPanel>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPanelQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPanel>>> = ({ signal }) => getPanel(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPanel>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetPanelQueryResult = NonNullable<Awaited<ReturnType<typeof getPanel>>>
+export type GetPanelQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary Get a panel by ID
+ */
+
+export function useGetPanel<TData = Awaited<ReturnType<typeof getPanel>>, TError = ErrorType<ErrorResponse>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPanel>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetPanelQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getUpdatePanelUrl = (id: number,) => {
+
+
+
+
+  return `/api/panels/${id}`
+}
+
+/**
+ * @summary Update a panel
+ */
+export const updatePanel = async (id: number,
+    panelUpdate: PanelUpdate, options?: RequestInit): Promise<Panel> => {
+
+  return customFetch<Panel>(getUpdatePanelUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(panelUpdate)
+  }
+);}
+
+
+
+
+
+export const getUpdatePanelMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePanel>>, TError,{id: number;data: BodyType<PanelUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updatePanel>>, TError,{id: number;data: BodyType<PanelUpdate>}, TContext> => {
+
+const mutationKey = ['updatePanel'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updatePanel>>, {id: number;data: BodyType<PanelUpdate>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updatePanel(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdatePanelMutationResult = NonNullable<Awaited<ReturnType<typeof updatePanel>>>
+    export type UpdatePanelMutationBody = BodyType<PanelUpdate>
+    export type UpdatePanelMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Update a panel
+ */
+export const useUpdatePanel = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePanel>>, TError,{id: number;data: BodyType<PanelUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updatePanel>>,
+        TError,
+        {id: number;data: BodyType<PanelUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdatePanelMutationOptions(options));
+    }
+
+export const getDeletePanelUrl = (id: number,) => {
+
+
+
+
+  return `/api/panels/${id}`
+}
+
+/**
+ * @summary Delete a panel
+ */
+export const deletePanel = async (id: number, options?: RequestInit): Promise<SuccessResponse> => {
+
+  return customFetch<SuccessResponse>(getDeletePanelUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeletePanelMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePanel>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deletePanel>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deletePanel'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deletePanel>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deletePanel(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeletePanelMutationResult = NonNullable<Awaited<ReturnType<typeof deletePanel>>>
+
+    export type DeletePanelMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Delete a panel
+ */
+export const useDeletePanel = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePanel>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deletePanel>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeletePanelMutationOptions(options));
+    }
+
+export const getListTechSpecItemsUrl = () => {
+
+
+
+
+  return `/api/tech-spec-items`
+}
+
+/**
+ * @summary List all tech spec master items
+ */
+export const listTechSpecItems = async ( options?: RequestInit): Promise<TechSpecItem[]> => {
+
+  return customFetch<TechSpecItem[]>(getListTechSpecItemsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListTechSpecItemsQueryKey = () => {
+    return [
+    `/api/tech-spec-items`
+    ] as const;
+    }
+
+
+export const getListTechSpecItemsQueryOptions = <TData = Awaited<ReturnType<typeof listTechSpecItems>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listTechSpecItems>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListTechSpecItemsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTechSpecItems>>> = ({ signal }) => listTechSpecItems({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listTechSpecItems>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListTechSpecItemsQueryResult = NonNullable<Awaited<ReturnType<typeof listTechSpecItems>>>
+export type ListTechSpecItemsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List all tech spec master items
+ */
+
+export function useListTechSpecItems<TData = Awaited<ReturnType<typeof listTechSpecItems>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listTechSpecItems>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListTechSpecItemsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateTechSpecItemUrl = () => {
+
+
+
+
+  return `/api/tech-spec-items`
+}
+
+/**
+ * @summary Create a tech spec item
+ */
+export const createTechSpecItem = async (techSpecItemInput: TechSpecItemInput, options?: RequestInit): Promise<TechSpecItem> => {
+
+  return customFetch<TechSpecItem>(getCreateTechSpecItemUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(techSpecItemInput)
+  }
+);}
+
+
+
+
+
+export const getCreateTechSpecItemMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTechSpecItem>>, TError,{data: BodyType<TechSpecItemInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createTechSpecItem>>, TError,{data: BodyType<TechSpecItemInput>}, TContext> => {
+
+const mutationKey = ['createTechSpecItem'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createTechSpecItem>>, {data: BodyType<TechSpecItemInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createTechSpecItem(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateTechSpecItemMutationResult = NonNullable<Awaited<ReturnType<typeof createTechSpecItem>>>
+    export type CreateTechSpecItemMutationBody = BodyType<TechSpecItemInput>
+    export type CreateTechSpecItemMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Create a tech spec item
+ */
+export const useCreateTechSpecItem = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTechSpecItem>>, TError,{data: BodyType<TechSpecItemInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createTechSpecItem>>,
+        TError,
+        {data: BodyType<TechSpecItemInput>},
+        TContext
+      > => {
+      return useMutation(getCreateTechSpecItemMutationOptions(options));
+    }
+
+export const getGetTechSpecItemUrl = (id: number,) => {
+
+
+
+
+  return `/api/tech-spec-items/${id}`
+}
+
+/**
+ * @summary Get a tech spec item by ID
+ */
+export const getTechSpecItem = async (id: number, options?: RequestInit): Promise<TechSpecItem> => {
+
+  return customFetch<TechSpecItem>(getGetTechSpecItemUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetTechSpecItemQueryKey = (id: number,) => {
+    return [
+    `/api/tech-spec-items/${id}`
+    ] as const;
+    }
+
+
+export const getGetTechSpecItemQueryOptions = <TData = Awaited<ReturnType<typeof getTechSpecItem>>, TError = ErrorType<ErrorResponse>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTechSpecItem>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetTechSpecItemQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getTechSpecItem>>> = ({ signal }) => getTechSpecItem(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getTechSpecItem>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetTechSpecItemQueryResult = NonNullable<Awaited<ReturnType<typeof getTechSpecItem>>>
+export type GetTechSpecItemQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary Get a tech spec item by ID
+ */
+
+export function useGetTechSpecItem<TData = Awaited<ReturnType<typeof getTechSpecItem>>, TError = ErrorType<ErrorResponse>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTechSpecItem>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetTechSpecItemQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getUpdateTechSpecItemUrl = (id: number,) => {
+
+
+
+
+  return `/api/tech-spec-items/${id}`
+}
+
+/**
+ * @summary Update a tech spec item
+ */
+export const updateTechSpecItem = async (id: number,
+    techSpecItemUpdate: TechSpecItemUpdate, options?: RequestInit): Promise<TechSpecItem> => {
+
+  return customFetch<TechSpecItem>(getUpdateTechSpecItemUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(techSpecItemUpdate)
+  }
+);}
+
+
+
+
+
+export const getUpdateTechSpecItemMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTechSpecItem>>, TError,{id: number;data: BodyType<TechSpecItemUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateTechSpecItem>>, TError,{id: number;data: BodyType<TechSpecItemUpdate>}, TContext> => {
+
+const mutationKey = ['updateTechSpecItem'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateTechSpecItem>>, {id: number;data: BodyType<TechSpecItemUpdate>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateTechSpecItem(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateTechSpecItemMutationResult = NonNullable<Awaited<ReturnType<typeof updateTechSpecItem>>>
+    export type UpdateTechSpecItemMutationBody = BodyType<TechSpecItemUpdate>
+    export type UpdateTechSpecItemMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Update a tech spec item
+ */
+export const useUpdateTechSpecItem = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTechSpecItem>>, TError,{id: number;data: BodyType<TechSpecItemUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateTechSpecItem>>,
+        TError,
+        {id: number;data: BodyType<TechSpecItemUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateTechSpecItemMutationOptions(options));
+    }
+
+export const getDeleteTechSpecItemUrl = (id: number,) => {
+
+
+
+
+  return `/api/tech-spec-items/${id}`
+}
+
+/**
+ * @summary Delete a tech spec item
+ */
+export const deleteTechSpecItem = async (id: number, options?: RequestInit): Promise<SuccessResponse> => {
+
+  return customFetch<SuccessResponse>(getDeleteTechSpecItemUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteTechSpecItemMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteTechSpecItem>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteTechSpecItem>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deleteTechSpecItem'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteTechSpecItem>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteTechSpecItem(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteTechSpecItemMutationResult = NonNullable<Awaited<ReturnType<typeof deleteTechSpecItem>>>
+
+    export type DeleteTechSpecItemMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Delete a tech spec item
+ */
+export const useDeleteTechSpecItem = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteTechSpecItem>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteTechSpecItem>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeleteTechSpecItemMutationOptions(options));
     }
 
 export const getGetInvoiceStatsUrl = () => {

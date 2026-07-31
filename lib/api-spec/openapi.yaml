@@ -14,6 +14,10 @@ tags:
     description: Client/buyer management
   - name: invoices
     description: Invoice management
+  - name: panels
+    description: Panel master (name, component breakdown, size, price)
+  - name: tech-spec-items
+    description: Technical specification master (item name / default spec pairs)
 
 paths:
   /healthz:
@@ -118,6 +122,224 @@ paths:
       operationId: deleteClient
       tags: [clients]
       summary: Delete a client
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /panels:
+    get:
+      operationId: listPanels
+      tags: [panels]
+      summary: List all panels
+      responses:
+        "200":
+          description: List of panels
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Panel"
+    post:
+      operationId: createPanel
+      tags: [panels]
+      summary: Create a panel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PanelInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Panel"
+
+  /panels/{id}:
+    get:
+      operationId: getPanel
+      tags: [panels]
+      summary: Get a panel by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Panel
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Panel"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updatePanel
+      tags: [panels]
+      summary: Update a panel
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PanelUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Panel"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deletePanel
+      tags: [panels]
+      summary: Delete a panel
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /tech-spec-items:
+    get:
+      operationId: listTechSpecItems
+      tags: [tech-spec-items]
+      summary: List all tech spec master items
+      responses:
+        "200":
+          description: List of tech spec items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TechSpecItem"
+    post:
+      operationId: createTechSpecItem
+      tags: [tech-spec-items]
+      summary: Create a tech spec item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TechSpecItemInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TechSpecItem"
+
+  /tech-spec-items/{id}:
+    get:
+      operationId: getTechSpecItem
+      tags: [tech-spec-items]
+      summary: Get a tech spec item by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Tech spec item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TechSpecItem"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateTechSpecItem
+      tags: [tech-spec-items]
+      summary: Update a tech spec item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TechSpecItemUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TechSpecItem"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteTechSpecItem
+      tags: [tech-spec-items]
+      summary: Delete a tech spec item
       parameters:
         - name: id
           in: path
@@ -370,6 +592,94 @@ components:
           type: string
         email:
           type: string
+
+    Panel:
+      type: object
+      required: [id, name, breakdownText, panelSize, price, defaultQty]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        breakdownText:
+          type: string
+        panelSize:
+          type: string
+        price:
+          type: number
+        defaultQty:
+          type: integer
+        createdAt:
+          type: string
+
+    PanelInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        breakdownText:
+          type: string
+        panelSize:
+          type: string
+        price:
+          type: number
+          minimum: 0
+        defaultQty:
+          type: integer
+          minimum: 1
+
+    PanelUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        breakdownText:
+          type: string
+        panelSize:
+          type: string
+        price:
+          type: number
+          minimum: 0
+        defaultQty:
+          type: integer
+          minimum: 1
+
+    TechSpecItem:
+      type: object
+      required: [id, itemName, defaultSpec]
+      properties:
+        id:
+          type: integer
+        itemName:
+          type: string
+        defaultSpec:
+          type: string
+        createdAt:
+          type: string
+
+    TechSpecItemInput:
+      type: object
+      required: [itemName, defaultSpec]
+      properties:
+        itemName:
+          type: string
+          minLength: 1
+        defaultSpec:
+          type: string
+          minLength: 1
+
+    TechSpecItemUpdate:
+      type: object
+      properties:
+        itemName:
+          type: string
+          minLength: 1
+        defaultSpec:
+          type: string
+          minLength: 1
 
     InvoiceItem:
       type: object

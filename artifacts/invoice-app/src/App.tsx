@@ -14,6 +14,10 @@ import InvoiceDetail from '@/pages/invoices/detail';
 import QuotationsList from '@/pages/quotations/list';
 import QuotationForm from '@/pages/quotations/form';
 import QuotationDetail from '@/pages/quotations/detail';
+import PanelsList from '@/pages/panels/list';
+import PanelForm from '@/pages/panels/form';
+import TechSpecItemsList from '@/pages/tech-spec-items/list';
+import TechSpecItemForm from '@/pages/tech-spec-items/form';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -46,7 +50,17 @@ function Router() {
         <Route path="/quotations/new" component={QuotationForm} />
         <Route path="/quotations/:id/edit" component={QuotationForm} />
         <Route path="/quotations/:id" component={QuotationDetail} />
-        
+
+        {/* Panel Master */}
+        <Route path="/panels" component={PanelsList} />
+        <Route path="/panels/new" component={PanelForm} />
+        <Route path="/panels/:id/edit" component={PanelForm} />
+
+        {/* Tech Spec Master */}
+        <Route path="/tech-spec-items" component={TechSpecItemsList} />
+        <Route path="/tech-spec-items/new" component={TechSpecItemForm} />
+        <Route path="/tech-spec-items/:id/edit" component={TechSpecItemForm} />
+
         <Route component={NotFound} />
       </Switch>
     </Layout>

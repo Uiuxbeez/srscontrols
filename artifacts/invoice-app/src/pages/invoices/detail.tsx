@@ -1,6 +1,6 @@
 import { useGetInvoice, useDeleteInvoice, getListInvoicesQueryKey } from "@workspace/api-client-react"
 import { useParams, useLocation, Link } from "wouter"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -73,6 +73,11 @@ export default function InvoiceDetail() {
   })
 
   const deleteInvoice = useDeleteInvoice()
+  const isDuplicateCopy = (() => {
+    if (typeof window === "undefined") return false
+    const params = new URLSearchParams(window.location.search)
+    return params.get("duplicateCopy") === "1" || params.get("copyType") === "duplicate"
+  })()
 
   const handleDelete = () => {
     deleteInvoice.mutate({ id }, {
@@ -87,8 +92,11 @@ export default function InvoiceDetail() {
     })
   }
 
+  const handleDuplicatePrint = () => {
+    window.location.href = `/invoices/${id}?print=1&duplicateCopy=1`
+  }
+
   useEffect(() => {
-    if (!invoice) return
     if (typeof window === "undefined") return
     const params = new URLSearchParams(window.location.search)
     const shouldPrint = params.get("print") === "1" || params.get("print") === "true"
@@ -157,15 +165,11 @@ export default function InvoiceDetail() {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
-          <Button variant="outline" onClick={() => {
-            if (typeof window === 'undefined') return
-            const url = `${window.location.origin}${import.meta.env.BASE_URL}invoices/${id}?print=1&copy=duplicate`
-            window.open(url, '_blank')
-          }}>
-            <Printer className="w-4 h-4 mr-2" /> Duplicate Copy
-          </Button>
           <Button variant="outline" asChild>
             <Link href={`/invoices/${id}/edit`}><Edit className="w-4 h-4 mr-2" /> Edit</Link>
+          </Button>
+          <Button variant="outline" onClick={handleDuplicatePrint}>
+            Duplicate Copy
           </Button>
           <Button onClick={() => window.print()}>
             <Printer className="w-4 h-4 mr-2" /> Print
@@ -244,9 +248,7 @@ export default function InvoiceDetail() {
 
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px", flexShrink: 0 }}>
                 <div style={{ alignSelf: "flex-end", color: COL.value, fontSize: "12px", fontWeight: 800 }}>
-                  {typeof window !== "undefined" && new URLSearchParams(window.location.search).get("copy") === "duplicate"
-                    ? "(DUPLICATE COPY)"
-                    : "(ORIGINAL FOR RECIPIENT)"}
+                  {isDuplicateCopy ? "DUPLICATE COPY" : "(ORIGINAL FOR RECIPIENT)"}
                 </div>
                 <div style={{ color: COL.header, fontSize: "13px", fontWeight: 800 }}>Invoice</div>
                 <div style={{ border: `1.5px solid ${COL.header}`, padding: "7px", backgroundColor: "#fff" }}>
@@ -260,7 +262,6 @@ export default function InvoiceDetail() {
                 </div>
               </div>
             </div>
-
 
           </div>
 
@@ -351,16 +352,16 @@ export default function InvoiceDetail() {
                   key={item.id}
                   style={{ backgroundColor: "#fff" }}
                 >
-                  <td style={{ padding: "5px 5px", textAlign: "center", fontSize: "12px", verticalAlign: "top", borderRight: `1px solid ${COL.softBorder}`, borderBottom: `1px solid ${COL.softBorder}` }}>{item.sNo}</td>
-                  <td style={{ padding: "10px 12px", verticalAlign: "top", borderRight: `1px solid ${COL.softBorder}`, borderBottom: `1px solid ${COL.softBorder}` }}>
+                  <td style={{ padding: "5px 5px", textAlign: "center", fontSize: "12px", verticalAlign: "center", borderRight: `1px solid ${COL.softBorder}`, borderBottom: `1px solid ${COL.softBorder}` }}>{item.sNo}</td>
+                  <td style={{ padding: "5px 5px", verticalAlign: "center", borderRight: `1px solid ${COL.softBorder}`, borderBottom: `1px solid ${COL.softBorder}` }}>
                     <div style={{ fontWeight: 500 }}>{item.description}</div>
                   </td>
-                  <td style={{ padding: "5px 5px", textAlign: "center", fontSize: "12px", verticalAlign: "top", borderRight: `1px solid ${COL.softBorder}`, borderBottom: `1px solid ${COL.softBorder}` }}>{item.hsnSac || "—"}</td>
-                  <td style={{ padding: "5px 5px", textAlign: "center", fontSize: "12px", verticalAlign: "top", borderRight: `1px solid ${COL.softBorder}`, borderBottom: `1px solid ${COL.softBorder}` }}>{invoice.cgstRate + invoice.sgstRate}</td>
-                  <td style={{ padding: "5px 5px", textAlign: "center", verticalAlign: "top", borderRight: `1px solid ${COL.softBorder}`, borderBottom: `1px solid ${COL.softBorder}` }}>{item.qty ?? "—"} {item.per || ""}</td>
-                  <td style={{ padding: "5px 5px", textAlign: "right", verticalAlign: "top", borderRight: `1px solid ${COL.softBorder}`, borderBottom: `1px solid ${COL.softBorder}` }}>{item.rate != null ? formatAmount(item.rate) : "—"}</td>
-                  <td style={{ padding: "5px 5px", textAlign: "center", verticalAlign: "top", borderRight: `1px solid ${COL.softBorder}`, borderBottom: `1px solid ${COL.softBorder}` }}>—</td>
-                  <td style={{ padding: "10px 10px 5px 5px", textAlign: "right", fontWeight: 700, verticalAlign: "top", borderBottom: `1px solid ${COL.softBorder}` }}>{formatAmount(item.amount)}</td>
+                  <td style={{ padding: "5px 5px", textAlign: "center", fontSize: "12px", verticalAlign: "center", borderRight: `1px solid ${COL.softBorder}`, borderBottom: `1px solid ${COL.softBorder}` }}>{item.hsnSac || "—"}</td>
+                  <td style={{ padding: "5px 5px", textAlign: "center", fontSize: "12px", verticalAlign: "center", borderRight: `1px solid ${COL.softBorder}`, borderBottom: `1px solid ${COL.softBorder}` }}>{invoice.cgstRate + invoice.sgstRate}</td>
+                  <td style={{ padding: "5px 5px", textAlign: "center", verticalAlign: "center", borderRight: `1px solid ${COL.softBorder}`, borderBottom: `1px solid ${COL.softBorder}` }}>{item.qty ?? "—"} {item.per || ""}</td>
+                  <td style={{ padding: "5px 5px", textAlign: "right", verticalAlign: "center", borderRight: `1px solid ${COL.softBorder}`, borderBottom: `1px solid ${COL.softBorder}` }}>{item.rate != null ? formatAmount(item.rate) : "—"}</td>
+                  <td style={{ padding: "5px 5px", textAlign: "center", verticalAlign: "center", borderRight: `1px solid ${COL.softBorder}`, borderBottom: `1px solid ${COL.softBorder}` }}>—</td>
+                  <td style={{ padding: "10px 10px 5px 5px", textAlign: "right", fontWeight: 700, verticalAlign: "center", borderBottom: `1px solid ${COL.softBorder}` }}>{formatAmount(item.amount)}</td>
                 </tr>
               ))}
               {Array.from({ length: fillerRows }).map((_, i) => (
@@ -419,7 +420,7 @@ export default function InvoiceDetail() {
           </div>
 
           {/* ══ 5. HSN TAX SUMMARY ══ */}
-          <div style={{ borderTop: `1px solid ${COL.border}`, padding: "0", display: "none" }}>
+          <div style={{ borderTop: `1px solid ${COL.border}`, padding: "0", margin: "10px 0 0 0"}}>
             <div style={{ padding: "8px 32px 4px", fontSize: "11px", fontWeight: 600, color: COL.label, textTransform: "uppercase", letterSpacing: "0.05em" }}>
               Tax Analysis
             </div>

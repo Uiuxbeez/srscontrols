@@ -1,10 +1,11 @@
+import { useEffect } from "react"
 import { useParams, useLocation, Link } from "wouter"
 import { useQueryClient } from "@tanstack/react-query"
 import { useGetQuotation, useDeleteQuotation, quotationKeys } from "@/lib/quotation-api"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/hooks/use-toast"
-import { ArrowLeft, Edit, Printer, Trash2 } from "lucide-react"
+import { ArrowLeft, Edit, Printer, Trash2, User, ClipboardList, Landmark } from "lucide-react"
 import { QRCodeSVG } from "qrcode.react"
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -12,15 +13,16 @@ import {
   AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
-/* ─── Colour tokens (orange theme) ─── */
+/* ─── Colour tokens (matches the invoice's green palette) ─── */
 const C = {
-  orange: "#ea580c",
-  orangeLight: "#fff7ed",
-  orangeBorder: "#fed7aa",
-  header: "#ea580c",
+  accent: "#006b2d",
+  accentLight: "#f8fcf9",
+  accentBorder: "#9bc8a8",
+  softBorder: "#cfe3d4",
+  header: "#006b2d",
   headerText: "#ffffff",
-  border: "#e5e7eb",
-  label: "#6b7280",
+  border: "#9bc8a8",
+  label: "#0b4f24",
   value: "#111827",
 }
 
@@ -34,6 +36,19 @@ function fmt(n: number) {
   return `₹${n.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`
 }
 
+/* breakdownText is stored as one "Component - Note" (or bare Component) per line */
+function parseBreakdown(text: string): { component: string; note: string }[] {
+  return text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const idx = line.lastIndexOf(" - ")
+      if (idx === -1) return { component: line, note: "" }
+      return { component: line.slice(0, idx), note: line.slice(idx + 3) }
+    })
+}
+
 export default function QuotationDetail() {
   const params = useParams()
   const id = Number(params.id)
@@ -43,6 +58,11 @@ export default function QuotationDetail() {
 
   const { data: quotation, isLoading } = useGetQuotation(id)
   const deleteQuotation = useDeleteQuotation()
+  const isDuplicateCopy = (() => {
+    if (typeof window === "undefined") return false
+    const params = new URLSearchParams(window.location.search)
+    return params.get("duplicateCopy") === "1" || params.get("copyType") === "duplicate"
+  })()
 
   const handleDelete = () => {
     deleteQuotation.mutate(id, {
@@ -55,6 +75,20 @@ export default function QuotationDetail() {
     })
   }
 
+  const handleDuplicatePrint = () => {
+    window.location.href = `/quotations/${id}?print=1&duplicateCopy=1`
+  }
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const params = new URLSearchParams(window.location.search)
+    const shouldPrint = params.get("print") === "1" || params.get("print") === "true"
+    const isPdfRender = params.get("pdfRender") === "1" || params.get("pdf") === "1"
+    if (shouldPrint && !isPdfRender) {
+      setTimeout(() => window.print(), 300)
+    }
+  }, [quotation])
+
   if (isLoading) return (
     <div className="space-y-6">
       <Skeleton className="h-10 w-48" />
@@ -63,8 +97,6 @@ export default function QuotationDetail() {
   )
 
   if (!quotation) return <div className="p-8 text-center text-muted-foreground">Quotation not found.</div>
-
-  const fillerRows = Math.max(0, 5 - quotation.items.length)
 
   return (
     <div className="space-y-6">
@@ -97,6 +129,9 @@ export default function QuotationDetail() {
           <Button variant="outline" asChild>
             <Link href={`/quotations/${id}/edit`}><Edit className="w-4 h-4 mr-2" /> Edit</Link>
           </Button>
+          <Button variant="outline" onClick={handleDuplicatePrint}>
+            Duplicate Copy
+          </Button>
           <Button onClick={() => window.print()}>
             <Printer className="w-4 h-4 mr-2" /> Print
           </Button>
@@ -108,8 +143,8 @@ export default function QuotationDetail() {
         className="bg-white text-black mx-auto print:shadow-none print:m-0"
         style={{
           maxWidth: "210mm",
-          border: `1px solid ${C.border}`,
-          borderRadius: "6px",
+          border: `1.5px solid ${C.accent}`,
+          borderRadius: "8px",
           fontFamily: "'Inter', 'Segoe UI', Arial, sans-serif",
           fontSize: "13px",
           color: C.value,
@@ -127,12 +162,14 @@ export default function QuotationDetail() {
         <div style={{ position: "relative", zIndex: 1 }}>
 
           {/* ══ 1. PAGE TITLE ══ */}
-          <div style={{ textAlign: "center", padding: "20px 32px 8px", borderBottom: `1px solid ${C.border}` }}>
-            <div style={{ fontSize: "24px", fontWeight: 700, color: C.orange, letterSpacing: "1px" }}>Quotation</div>
+          <div style={{ display: "flex", alignItems: "center", gap: "16px", padding: "24px 32px 8px" }}>
+            <div style={{ flex: 1, height: "2px", backgroundColor: C.accentBorder }} />
+            <div style={{ fontSize: "24px", fontWeight: 700, color: C.accent, letterSpacing: "2px", textTransform: "uppercase" }}>Quotation</div>
+            <div style={{ flex: 1, height: "2px", backgroundColor: C.accentBorder }} />
           </div>
 
           {/* ══ 2. HEADER: Logo ↔ Quotation Meta ══ */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "20px 32px 16px", borderBottom: `1px solid ${C.border}` }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "16px 32px 16px" }}>
             {/* Left: logo + company name */}
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
               <img
@@ -147,9 +184,12 @@ export default function QuotationDetail() {
             </div>
             {/* Right: QR + quotation meta */}
             <div style={{ textAlign: "right", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "6px" }}>
+              <div style={{ fontSize: "11px", fontWeight: 800, color: C.value }}>
+                {isDuplicateCopy ? "DUPLICATE COPY" : "(ORIGINAL FOR RECIPIENT)"}
+              </div>
               <QRCodeSVG
                 value={typeof window !== "undefined" ? window.location.href : `quotations/${id}`}
-                size={64} level="M" includeMargin={false} fgColor={C.orange}
+                size={64} level="M" includeMargin={false} fgColor={C.accent}
               />
               <div style={{ fontSize: "12px" }}>
                 <span style={{ color: C.label }}>Quotation# </span>
@@ -163,16 +203,16 @@ export default function QuotationDetail() {
           </div>
 
           {/* ══ 3. FROM / TO boxes ══ */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", padding: "16px 32px", borderBottom: `1px solid ${C.border}` }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", padding: "16px 32px" }}>
             {/* Quotation by */}
-            <div style={{ border: `1px solid ${C.orangeBorder}`, borderRadius: "6px", overflow: "hidden" }}>
-              <div style={{ backgroundColor: C.orangeLight, borderBottom: `1px solid ${C.orangeBorder}`, padding: "6px 14px", fontSize: "12px", fontWeight: 700, color: C.orange }}>
-                Quotation by
+            <div style={{ border: `1px solid ${C.accentBorder}`, borderRadius: "4px", overflow: "hidden" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "9px 14px", fontSize: "13px", fontWeight: 800, color: C.label, textTransform: "uppercase", backgroundColor: C.accentLight, borderBottom: `1px solid ${C.softBorder}` }}>
+                <User size={16} /> Quotation by
               </div>
               <div style={{ padding: "12px 14px", fontSize: "12px", lineHeight: 1.7 }}>
                 <div style={{ fontWeight: 700, marginBottom: "2px" }}>SRS CONTROLS</div>
-                <div style={{ color: C.label }}>New No. 97, Sanganoor Road, Ganapathy,</div>
-                <div style={{ color: C.label }}>Coimbatore – 641 006</div>
+                <div style={{ color: C.label }}>Manufacturers of: Electric Control Panels, 100/2, Kurudampalayam Village, K.Vadamadurai,</div>
+                <div style={{ color: C.label }}>Thudiyalur, Coimbatore – 641017</div>
                 <div style={{ marginTop: "6px" }}>
                   <span style={{ color: C.label }}>GSTIN </span><strong>33AKQPS9506E1ZH</strong>
                 </div>
@@ -183,9 +223,9 @@ export default function QuotationDetail() {
             </div>
 
             {/* Quotation to */}
-            <div style={{ border: `1px solid ${C.orangeBorder}`, borderRadius: "6px", overflow: "hidden" }}>
-              <div style={{ backgroundColor: C.orangeLight, borderBottom: `1px solid ${C.orangeBorder}`, padding: "6px 14px", fontSize: "12px", fontWeight: 700, color: C.orange }}>
-                Quotation to
+            <div style={{ border: `1px solid ${C.accentBorder}`, borderRadius: "4px", overflow: "hidden" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "9px 14px", fontSize: "13px", fontWeight: 800, color: C.label, textTransform: "uppercase", backgroundColor: C.accentLight, borderBottom: `1px solid ${C.softBorder}` }}>
+                <User size={16} /> Quotation to
               </div>
               <div style={{ padding: "12px 14px", fontSize: "12px", lineHeight: 1.7 }}>
                 <div style={{ fontWeight: 700, marginBottom: "2px" }}>{quotation.client?.name}</div>
@@ -203,68 +243,112 @@ export default function QuotationDetail() {
           {quotation.subject && (
             <div style={{ padding: "10px 32px", borderBottom: `1px solid ${C.border}`, fontSize: "12px" }}>
               <span style={{ color: C.label }}>Sub: </span>
-              <span style={{ fontWeight: 600 }}>{quotation.subject}</span>
+              <span style={{ fontWeight: 600 }}>Quotation for supply of {quotation.subject} as Following</span>
             </div>
           )}
 
-          {/* ══ 4. ITEMS TABLE ══ */}
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <colgroup>
-              <col style={{ width: "6%" }} />
-              <col style={{ width: "50%" }} />
-              <col style={{ width: "12%" }} />
-              <col style={{ width: "16%" }} />
-              <col style={{ width: "16%" }} />
-            </colgroup>
-            <thead>
-              <tr style={{ backgroundColor: C.header, color: C.headerText }}>
-                <th style={{ padding: "10px 8px", textAlign: "center", fontWeight: 600, fontSize: "12px" }}>#</th>
-                <th style={{ padding: "10px 8px", textAlign: "left", fontWeight: 600, fontSize: "12px" }}>Item / Description</th>
-                <th style={{ padding: "10px 8px", textAlign: "right", fontWeight: 600, fontSize: "12px" }}>Qty.</th>
-                <th style={{ padding: "10px 8px", textAlign: "right", fontWeight: 600, fontSize: "12px" }}>Rate</th>
-                <th style={{ padding: "10px 16px 10px 8px", textAlign: "right", fontWeight: 600, fontSize: "12px" }}>Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              {quotation.items.map((item, idx) => (
-                <tr key={item.id} style={{ borderBottom: `1px solid ${C.border}`, backgroundColor: idx % 2 === 0 ? "#fff" : "#fafafa" }}>
-                  <td style={{ padding: "10px 8px", textAlign: "center", color: C.label, fontSize: "12px", verticalAlign: "top" }}>{item.sNo}</td>
-                  <td style={{ padding: "10px 8px", verticalAlign: "top", whiteSpace: "pre-wrap", fontSize: "12px" }}>
-                    {item.description}
-                  </td>
-                  <td style={{ padding: "10px 8px", textAlign: "right", verticalAlign: "top", fontSize: "12px" }}>{item.qty ?? "—"}</td>
-                  <td style={{ padding: "10px 8px", textAlign: "right", verticalAlign: "top", fontSize: "12px" }}>
-                    {item.rate != null ? fmt(item.rate) : "—"}
-                  </td>
-                  <td style={{ padding: "10px 16px 10px 8px", textAlign: "right", fontWeight: 600, verticalAlign: "top" }}>
-                    {fmt(item.amount)}
-                  </td>
-                </tr>
+          {/* ══ 3b. TECHNICAL SPECIFICATION ══ */}
+          {quotation.techSpecs.length > 0 && (
+            <div style={{ borderBottom: `1px solid ${C.border}` }}>
+              <div style={{ padding: "10px 32px 6px", fontWeight: 700, fontSize: "13px", color: C.accent }}>
+                Technical Specification
+              </div>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <colgroup>
+                  <col style={{ width: "6%" }} />
+                  <col style={{ width: "34%" }} />
+                  <col style={{ width: "60%" }} />
+                </colgroup>
+                <thead>
+                  <tr style={{ backgroundColor: C.header, color: C.headerText }}>
+                    <th style={{ padding: "8px 8px", textAlign: "center", fontWeight: 600, fontSize: "12px" }}>#</th>
+                    <th style={{ padding: "8px 8px", textAlign: "left", fontWeight: 600, fontSize: "12px" }}>Item</th>
+                    <th style={{ padding: "8px 8px", textAlign: "left", fontWeight: 600, fontSize: "12px" }}>Spec / Note</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {quotation.techSpecs.map((spec, idx) => (
+                    <tr key={spec.id} style={{ borderBottom: `1px solid ${C.softBorder}`, backgroundColor: idx % 2 === 0 ? "#fff" : C.accentLight }}>
+                      <td style={{ padding: "8px 8px", textAlign: "center", color: C.label, fontSize: "12px" }}>{idx + 1}</td>
+                      <td style={{ padding: "8px 8px", fontSize: "12px", fontWeight: 600 }}>{spec.itemName}</td>
+                      <td style={{ padding: "8px 32px 8px 8px", fontSize: "12px" }}>{spec.spec}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* ══ 3c. PANEL SPECIFICATION ══ */}
+          {quotation.panelSpecs.length > 0 && (
+            <div style={{ borderBottom: `1px solid ${C.border}` }}>
+              {quotation.panelSpecs.map((spec, idx) => (
+                <div key={spec.id} style={{ padding: "14px 32px", borderBottom: idx < quotation.panelSpecs.length - 1 ? `1px solid ${C.border}` : undefined }}>
+                  <div style={{ fontWeight: 700, fontSize: "13px", color: C.accent, marginBottom: "8px" }}>
+                    {idx + 1}. {spec.panelName}
+                  </div>
+                  {spec.breakdownText && (
+                    <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: "8px", border: `1px solid ${C.accentBorder}`, borderRadius: "4px" }}>
+                      <colgroup>
+                        <col style={{ width: "6%" }} />
+                        <col style={{ width: "64%" }} />
+                        <col style={{ width: "30%" }} />
+                      </colgroup>
+                      <tbody>
+                        {parseBreakdown(spec.breakdownText).map((row, i) => (
+                          <tr key={i} style={{ borderBottom: `1px solid ${C.softBorder}` }}>
+                            <td style={{ padding: "6px 8px", textAlign: "center", color: C.label, fontSize: "12px", borderRight: `1px solid ${C.softBorder}` }}>{i + 1}</td>
+                            <td style={{ padding: "6px 8px", fontSize: "12px", fontWeight: 600, borderRight: `1px solid ${C.softBorder}` }}>{row.component}</td>
+                            <td style={{ padding: "6px 8px", fontSize: "12px" }}>{row.note}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                  {(() => {
+                    const matchedItem = quotation.items.find((i) => i.description === spec.panelName)
+                    return (
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "12px" }}>
+                        {spec.panelSize ? (
+                          <div>
+                            <span style={{ color: C.label }}>Panel Size </span>
+                            <strong>{spec.panelSize}</strong>
+                          </div>
+                        ) : <div />}
+                        {matchedItem && (
+                          <div style={{ display: "flex", gap: "20px" }}>
+                            <div><span style={{ color: C.label }}>Qty </span><strong>{matchedItem.qty ?? "—"}</strong></div>
+                            <div><span style={{ color: C.label }}>Rate </span><strong>{matchedItem.rate != null ? fmt(matchedItem.rate) : "—"}</strong></div>
+                            <div><span style={{ color: C.label }}>Amount </span><strong>{fmt(matchedItem.amount)}</strong></div>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })()}
+                </div>
               ))}
-              {Array.from({ length: fillerRows }).map((_, i) => (
-                <tr key={`f${i}`} style={{ borderBottom: `1px solid ${C.border}`, height: "36px" }}>
-                  {[0, 1, 2, 3, 4].map((c) => <td key={c} />)}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+            </div>
+          )}
+
+
 
           {/* ══ 5. FOOTER: Terms left | Totals right ══ */}
-          <div style={{ display: "flex", borderTop: `2px solid ${C.border}` }}>
+          <div style={{ display: "flex", gap: "16px", padding: "16px 32px", alignItems: "flex-start" }}>
             {/* Left: Terms */}
-            <div style={{ flex: 1, padding: "20px 32px", borderRight: `1px solid ${C.border}`, fontSize: "12px" }}>
+            <div style={{ flex: 1, border: `1px solid ${C.accentBorder}`, borderRadius: "4px", overflow: "hidden", fontSize: "12px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "9px 14px", fontWeight: 800, fontSize: "13px", color: C.label, textTransform: "uppercase", letterSpacing: "0.5px", backgroundColor: C.accentLight, borderBottom: `1px solid ${C.softBorder}` }}>
+                <ClipboardList size={16} /> Terms and Conditions
+              </div>
+              <div style={{ padding: "12px 16px" }}>
               {[
-                ["Terms and Conditions", null],
                 ["Advance", quotation.termsAdvance],
                 ["Delivery", quotation.termsDelivery],
                 ["Transport", quotation.termsTransport],
                 ["Tax", quotation.termsTax],
                 ["Validity", quotation.termsValidity],
                 ["Warranty", quotation.termsWarranty],
-              ].map(([label, value], i) =>
-                i === 0 ? (
-                  <div key="title" style={{ fontWeight: 700, fontSize: "13px", color: C.orange, marginBottom: "10px" }}>{label}</div>
-                ) : value ? (
+              ].map(([label, value]) =>
+                value ? (
                   <div key={label as string} style={{ marginBottom: "6px" }}>
                     <span style={{ color: C.label, minWidth: "80px", display: "inline-block" }}>{label}: </span>
                     <span>{value}</span>
@@ -274,45 +358,46 @@ export default function QuotationDetail() {
 
               {quotation.notes && (
                 <div style={{ marginTop: "14px" }}>
-                  <div style={{ fontWeight: 700, fontSize: "13px", color: C.orange, marginBottom: "6px" }}>Additional Notes</div>
+                  <div style={{ fontWeight: 700, fontSize: "13px", color: C.accent, marginBottom: "6px" }}>Additional Notes</div>
                   <div style={{ color: C.label, lineHeight: 1.6 }}>{quotation.notes}</div>
                 </div>
               )}
+              </div>
             </div>
 
             {/* Right: Totals */}
-            <div style={{ width: "260px", flexShrink: 0 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 16px", borderBottom: `1px solid ${C.border}` }}>
+            <div style={{ width: "260px", flexShrink: 0, border: `1px solid ${C.accentBorder}`, borderRadius: "4px", overflow: "hidden" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 16px", borderBottom: `1px solid ${C.softBorder}` }}>
                 <span style={{ color: C.label, fontSize: "12px" }}>Sub Total</span>
                 <span style={{ fontWeight: 600 }}>{fmt(quotation.subtotal)}</span>
               </div>
               {quotation.discountPct > 0 && (
-                <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 16px", borderBottom: `1px solid ${C.border}` }}>
-                  <span style={{ color: C.orange, fontSize: "12px", fontWeight: 600 }}>Discount ({quotation.discountPct}%)</span>
-                  <span style={{ fontWeight: 600, color: C.orange }}>- {fmt(quotation.discountAmount)}</span>
+                <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 16px", borderBottom: `1px solid ${C.softBorder}` }}>
+                  <span style={{ color: C.accent, fontSize: "12px", fontWeight: 600 }}>Discount ({quotation.discountPct}%)</span>
+                  <span style={{ fontWeight: 600, color: C.accent }}>- {fmt(quotation.discountAmount)}</span>
                 </div>
               )}
               {quotation.discountPct > 0 && (
-                <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 16px", borderBottom: `1px solid ${C.border}` }}>
+                <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 16px", borderBottom: `1px solid ${C.softBorder}` }}>
                   <span style={{ color: C.label, fontSize: "12px" }}>After Discount</span>
                   <span style={{ fontWeight: 600 }}>{fmt(quotation.afterDiscountTotal)}</span>
                 </div>
               )}
-              <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 16px", borderBottom: `1px solid ${C.border}` }}>
+              <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 16px", borderBottom: `1px solid ${C.softBorder}` }}>
                 <span style={{ color: C.label, fontSize: "12px" }}>GST @ {quotation.gstRate}%</span>
                 <span style={{ fontWeight: 600 }}>{fmt(quotation.gstAmount)}</span>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 16px", borderBottom: `1px solid ${C.border}` }}>
+              <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 16px", borderBottom: `1px solid ${C.softBorder}` }}>
                 <span style={{ color: C.label, fontSize: "12px" }}>Round Off</span>
                 <span style={{ fontWeight: 600 }}>{quotation.roundOff >= 0 ? "+" : ""}{quotation.roundOff.toFixed(2)}</span>
               </div>
               {/* Total */}
-              <div style={{ display: "flex", justifyContent: "space-between", padding: "14px 16px", backgroundColor: C.orange }}>
+              <div style={{ display: "flex", justifyContent: "space-between", padding: "14px 16px", backgroundColor: C.accent }}>
                 <span style={{ fontWeight: 700, color: "#fff", fontSize: "14px" }}>Total</span>
                 <span style={{ fontWeight: 700, color: "#fff", fontSize: "16px" }}>{fmt(quotation.grandTotal)}</span>
               </div>
               {/* Amount in words */}
-              <div style={{ padding: "12px 16px", borderTop: `1px solid ${C.border}`, fontSize: "11px" }}>
+              <div style={{ padding: "12px 16px", fontSize: "11px" }}>
                 <div style={{ color: C.label, marginBottom: "4px" }}>Invoice Total (in words)</div>
                 <div style={{ fontWeight: 600, fontSize: "12px", lineHeight: 1.5 }}>{quotation.amountInWords}</div>
               </div>
@@ -320,26 +405,30 @@ export default function QuotationDetail() {
           </div>
 
           {/* ══ 6. BANK DETAILS ══ */}
-          <div style={{ borderTop: `1px solid ${C.border}`, padding: "16px 32px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", fontSize: "12px" }}>
+          <div style={{ padding: "0 32px 16px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", fontSize: "12px" }}>
             {[
               { bank: "KARUR VYSYA BANK", branch: "Thudiyalur", acc: "1721223000000070", ifsc: "KVBL0001721" },
               { bank: "INDUSIND BANK", branch: "G.N.Mills", acc: "201001628600", ifsc: "INDB0001017" },
             ].map((b) => (
-              <div key={b.bank}>
-                <div style={{ fontWeight: 700, marginBottom: "4px" }}>RTGS — {b.bank}</div>
-                <div><span style={{ color: C.label }}>Account Name: </span>SRS CONTROLS</div>
-                <div><span style={{ color: C.label }}>Account No: </span>{b.acc}</div>
-                <div><span style={{ color: C.label }}>Branch: </span>{b.branch}</div>
-                <div><span style={{ color: C.label }}>IFSC: </span>{b.ifsc}</div>
+              <div key={b.bank} style={{ border: `1px solid ${C.accentBorder}`, borderRadius: "4px", overflow: "hidden" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "9px 14px", fontWeight: 800, color: C.label, textTransform: "uppercase", letterSpacing: "0.5px", backgroundColor: C.accentLight, borderBottom: `1px solid ${C.softBorder}` }}>
+                  <Landmark size={16} /> RTGS — {b.bank}
+                </div>
+                <div style={{ padding: "10px 14px" }}>
+                  <div><span style={{ color: C.label }}>Account Name: </span>SRS CONTROLS</div>
+                  <div><span style={{ color: C.label }}>Account No: </span>{b.acc}</div>
+                  <div><span style={{ color: C.label }}>Branch: </span>{b.branch}</div>
+                  <div><span style={{ color: C.label }}>IFSC: </span>{b.ifsc}</div>
+                </div>
               </div>
             ))}
           </div>
 
           {/* ══ 7. SIGNATURE ══ */}
-          <div style={{ display: "flex", justifyContent: "flex-end", padding: "16px 32px 20px", borderTop: `1px solid ${C.border}` }}>
+          <div style={{ display: "flex", justifyContent: "flex-end", padding: "0 32px 24px" }}>
             <div style={{ textAlign: "center", minWidth: "160px" }}>
               <div style={{ fontWeight: 700, marginBottom: "44px", fontSize: "12px" }}>for SRS CONTROLS</div>
-              <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: "6px", fontSize: "11px", color: C.label }}>
+              <div style={{ borderTop: `1px dashed ${C.accentBorder}`, paddingTop: "6px", fontSize: "11px", color: C.label }}>
                 Authorised Signatory
               </div>
             </div>

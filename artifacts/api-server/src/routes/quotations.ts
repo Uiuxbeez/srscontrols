@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { eq, desc, sql, like, and, or } from "drizzle-orm";
 import { db, clientsTable } from "@workspace/db";
-import { quotationsTable, quotationItemsTable } from "@workspace/db/schema";
+import { quotationsTable, quotationItemsTable, quotationPanelSpecsTable, quotationTechSpecsTable } from "@workspace/db/schema";
 import { z } from "zod";
 import { numberToWords } from "../lib/amountInWords";
 
@@ -14,6 +14,19 @@ const ItemSchema = z.object({
   qty: z.number().nullable().optional(),
   rate: z.number().nullable().optional(),
   amount: z.number(),
+});
+
+const PanelSpecSchema = z.object({
+  sNo: z.number().int().min(1),
+  panelName: z.string().min(1),
+  breakdownText: z.string().default(""),
+  panelSize: z.string().default(""),
+});
+
+const TechSpecSchema = z.object({
+  sNo: z.number().int().min(1),
+  itemName: z.string().min(1),
+  spec: z.string().default(""),
 });
 
 const CreateQuotationBody = z.object({
@@ -31,6 +44,8 @@ const CreateQuotationBody = z.object({
   termsWarranty: z.string().optional(),
   notes: z.string().optional(),
   items: z.array(ItemSchema).min(1),
+  panelSpecs: z.array(PanelSpecSchema).optional().default([]),
+  techSpecs: z.array(TechSpecSchema).optional().default([]),
 });
 
 const UpdateQuotationBody = CreateQuotationBody.partial();
@@ -70,6 +85,16 @@ async function fetchFullQuotation(id: number) {
     .from(quotationItemsTable)
     .where(eq(quotationItemsTable.quotationId, id))
     .orderBy(quotationItemsTable.sNo);
+  const panelSpecs = await db
+    .select()
+    .from(quotationPanelSpecsTable)
+    .where(eq(quotationPanelSpecsTable.quotationId, id))
+    .orderBy(quotationPanelSpecsTable.sNo);
+  const techSpecs = await db
+    .select()
+    .from(quotationTechSpecsTable)
+    .where(eq(quotationTechSpecsTable.quotationId, id))
+    .orderBy(quotationTechSpecsTable.sNo);
 
   return {
     ...q,
@@ -88,6 +113,8 @@ async function fetchFullQuotation(id: number) {
       rate: item.rate != null ? Number(item.rate) : null,
       amount: Number(item.amount),
     })),
+    panelSpecs,
+    techSpecs,
   };
 }
 
@@ -144,7 +171,7 @@ router.post("/quotations", async (req, res): Promise<void> => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
-  const { items, discountPct, gstRate, ...data } = parsed.data;
+  const { items, panelSpecs, techSpecs, discountPct, gstRate, ...data } = parsed.data;
   const totals = computeQuotationTotals(items, discountPct, gstRate);
 
   const [q] = await db
@@ -167,6 +194,29 @@ router.post("/quotations", async (req, res): Promise<void> => {
       amount: String(item.amount),
     })),
   );
+
+  if (panelSpecs.length > 0) {
+    await db.insert(quotationPanelSpecsTable).values(
+      panelSpecs.map((spec) => ({
+        quotationId: q!.id,
+        sNo: spec.sNo,
+        panelName: spec.panelName,
+        breakdownText: spec.breakdownText,
+        panelSize: spec.panelSize,
+      })),
+    );
+  }
+
+  if (techSpecs.length > 0) {
+    await db.insert(quotationTechSpecsTable).values(
+      techSpecs.map((spec) => ({
+        quotationId: q!.id,
+        sNo: spec.sNo,
+        itemName: spec.itemName,
+        spec: spec.spec,
+      })),
+    );
+  }
 
   res.status(201).json(await fetchFullQuotation(q!.id));
 });
@@ -191,7 +241,7 @@ router.patch("/quotations/:id", async (req, res): Promise<void> => {
   const [existing] = await db.select().from(quotationsTable).where(eq(quotationsTable.id, id));
   if (!existing) { res.status(404).json({ error: "Quotation not found" }); return; }
 
-  const { items, discountPct, gstRate, ...rest } = parsed.data;
+  const { items, panelSpecs, techSpecs, discountPct, gstRate, ...rest } = parsed.data;
 
   const effectiveDiscount = discountPct ?? Number(existing.discountPct);
   const effectiveGst = gstRate ?? Number(existing.gstRate);
@@ -199,6 +249,35 @@ router.patch("/quotations/:id", async (req, res): Promise<void> => {
   const updateData: Record<string, unknown> = { ...rest };
   if (discountPct != null) updateData["discountPct"] = String(discountPct);
   if (gstRate != null) updateData["gstRate"] = String(gstRate);
+
+  if (panelSpecs !== undefined) {
+    await db.delete(quotationPanelSpecsTable).where(eq(quotationPanelSpecsTable.quotationId, id));
+    if (panelSpecs.length > 0) {
+      await db.insert(quotationPanelSpecsTable).values(
+        panelSpecs.map((spec) => ({
+          quotationId: id,
+          sNo: spec.sNo,
+          panelName: spec.panelName,
+          breakdownText: spec.breakdownText,
+          panelSize: spec.panelSize,
+        })),
+      );
+    }
+  }
+
+  if (techSpecs !== undefined) {
+    await db.delete(quotationTechSpecsTable).where(eq(quotationTechSpecsTable.quotationId, id));
+    if (techSpecs.length > 0) {
+      await db.insert(quotationTechSpecsTable).values(
+        techSpecs.map((spec) => ({
+          quotationId: id,
+          sNo: spec.sNo,
+          itemName: spec.itemName,
+          spec: spec.spec,
+        })),
+      );
+    }
+  }
 
   if (items && items.length > 0) {
     const totals = computeQuotationTotals(items, effectiveDiscount, effectiveGst);

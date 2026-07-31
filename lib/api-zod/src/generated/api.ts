@@ -117,6 +117,194 @@ export const DeleteClientResponse = zod.object({
 
 
 /**
+ * @summary List all panels
+ */
+export const ListPanelsResponseItem = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "breakdownText": zod.string(),
+  "panelSize": zod.string(),
+  "price": zod.number(),
+  "defaultQty": zod.number(),
+  "createdAt": zod.string().optional()
+})
+export const ListPanelsResponse = zod.array(ListPanelsResponseItem)
+
+
+/**
+ * @summary Create a panel
+ */
+
+export const createPanelBodyPriceMin = 0;
+
+
+
+
+export const CreatePanelBody = zod.object({
+  "name": zod.string().min(1),
+  "breakdownText": zod.string().optional(),
+  "panelSize": zod.string().optional(),
+  "price": zod.number().min(createPanelBodyPriceMin).optional(),
+  "defaultQty": zod.number().min(1).optional()
+})
+
+export const CreatePanelResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "breakdownText": zod.string(),
+  "panelSize": zod.string(),
+  "price": zod.number(),
+  "defaultQty": zod.number(),
+  "createdAt": zod.string().optional()
+})
+
+
+/**
+ * @summary Get a panel by ID
+ */
+export const GetPanelParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetPanelResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "breakdownText": zod.string(),
+  "panelSize": zod.string(),
+  "price": zod.number(),
+  "defaultQty": zod.number(),
+  "createdAt": zod.string().optional()
+})
+
+
+/**
+ * @summary Update a panel
+ */
+export const UpdatePanelParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+export const updatePanelBodyPriceMin = 0;
+
+
+
+
+export const UpdatePanelBody = zod.object({
+  "name": zod.string().min(1).optional(),
+  "breakdownText": zod.string().optional(),
+  "panelSize": zod.string().optional(),
+  "price": zod.number().min(updatePanelBodyPriceMin).optional(),
+  "defaultQty": zod.number().min(1).optional()
+})
+
+export const UpdatePanelResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "breakdownText": zod.string(),
+  "panelSize": zod.string(),
+  "price": zod.number(),
+  "defaultQty": zod.number(),
+  "createdAt": zod.string().optional()
+})
+
+
+/**
+ * @summary Delete a panel
+ */
+export const DeletePanelParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeletePanelResponse = zod.object({
+  "success": zod.boolean()
+})
+
+
+/**
+ * @summary List all tech spec master items
+ */
+export const ListTechSpecItemsResponseItem = zod.object({
+  "id": zod.number(),
+  "itemName": zod.string(),
+  "defaultSpec": zod.string(),
+  "createdAt": zod.string().optional()
+})
+export const ListTechSpecItemsResponse = zod.array(ListTechSpecItemsResponseItem)
+
+
+/**
+ * @summary Create a tech spec item
+ */
+
+
+
+
+export const CreateTechSpecItemBody = zod.object({
+  "itemName": zod.string().min(1),
+  "defaultSpec": zod.string().min(1)
+})
+
+export const CreateTechSpecItemResponse = zod.object({
+  "id": zod.number(),
+  "itemName": zod.string(),
+  "defaultSpec": zod.string(),
+  "createdAt": zod.string().optional()
+})
+
+
+/**
+ * @summary Get a tech spec item by ID
+ */
+export const GetTechSpecItemParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetTechSpecItemResponse = zod.object({
+  "id": zod.number(),
+  "itemName": zod.string(),
+  "defaultSpec": zod.string(),
+  "createdAt": zod.string().optional()
+})
+
+
+/**
+ * @summary Update a tech spec item
+ */
+export const UpdateTechSpecItemParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+
+
+
+export const UpdateTechSpecItemBody = zod.object({
+  "itemName": zod.string().min(1).optional(),
+  "defaultSpec": zod.string().min(1).optional()
+})
+
+export const UpdateTechSpecItemResponse = zod.object({
+  "id": zod.number(),
+  "itemName": zod.string(),
+  "defaultSpec": zod.string(),
+  "createdAt": zod.string().optional()
+})
+
+
+/**
+ * @summary Delete a tech spec item
+ */
+export const DeleteTechSpecItemParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteTechSpecItemResponse = zod.object({
+  "success": zod.boolean()
+})
+
+
+/**
  * @summary Get invoice statistics for dashboard
  */
 export const GetInvoiceStatsResponse = zod.object({

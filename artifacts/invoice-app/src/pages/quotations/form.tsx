@@ -1,9 +1,9 @@
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useLocation, useParams, Link } from "wouter"
-import { useForm, useFieldArray, useWatch } from "react-hook-form"
+import { useForm, useFieldArray, useWatch, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { useListClients } from "@workspace/api-client-react"
+import { useListClients, useListPanels, useListTechSpecItems } from "@workspace/api-client-react"
 import { useQueryClient } from "@tanstack/react-query"
 import {
   useCreateQuotation,
@@ -20,6 +20,8 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { AutocompleteInput } from "@/components/ui/autocomplete-input"
+import { TagInput } from "@/components/ui/tag-input"
 import { useToast } from "@/hooks/use-toast"
 import { ArrowLeft, Save, Plus, Trash2 } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -30,6 +32,19 @@ const itemSchema = z.object({
   qty: z.coerce.number().nullable().optional(),
   rate: z.coerce.number().nullable().optional(),
   amount: z.coerce.number().min(0),
+})
+
+const panelSpecSchema = z.object({
+  sNo: z.number().int().min(1),
+  panelName: z.string().min(1),
+  breakdownText: z.string().optional().default(""),
+  panelSize: z.string().optional().default(""),
+})
+
+const techSpecSchema = z.object({
+  sNo: z.number().int().min(1),
+  itemName: z.string().min(1, "Required"),
+  spec: z.string().optional().default(""),
 })
 
 const formSchema = z.object({
@@ -47,6 +62,8 @@ const formSchema = z.object({
   termsWarranty: z.string().optional(),
   notes: z.string().optional(),
   items: z.array(itemSchema).min(1, "At least one item is required"),
+  panelSpecs: z.array(panelSpecSchema).optional().default([]),
+  techSpecs: z.array(techSpecSchema).optional().default([]),
 })
 
 type FormValues = z.infer<typeof formSchema>
@@ -60,6 +77,18 @@ const DEFAULT_TERMS = {
   termsWarranty: "12 months from date of delivery",
 }
 
+/* Subject is composed from tags picked from Panel Master, e.g. "Quotation for supply of 1.X 2.Y As Following" */
+function composeSubject(tags: string[]): string {
+  if (tags.length === 0) return ""
+  return `Quotation for supply of ${tags.join(" ")} As Following`
+}
+
+function parseSubjectTags(subject: string): string[] {
+  const match = subject.match(/^Quotation for supply of (.+) As Following$/)
+  if (!match) return []
+  return match[1]!.split(/\s+(?=\d+\.)/).map((s) => s.trim()).filter(Boolean)
+}
+
 export default function QuotationForm() {
   const [, setLocation] = useLocation()
   const params = useParams()
@@ -70,6 +99,8 @@ export default function QuotationForm() {
   const queryClient = useQueryClient()
 
   const { data: clients } = useListClients()
+  const { data: panels } = useListPanels()
+  const { data: techSpecItems } = useListTechSpecItems()
   const { data: nextNumData } = useGetNextQuotationNumber()
   const { data: quotation, isLoading: quotationLoading } = useGetQuotation(quotationId as number)
 
@@ -88,10 +119,66 @@ export default function QuotationForm() {
       ...DEFAULT_TERMS,
       notes: "",
       items: [{ sNo: 1, description: "", qty: 1, rate: 0, amount: 0 }],
+      panelSpecs: [],
+      techSpecs: [],
     },
   })
 
   const { fields, append, remove } = useFieldArray({ control: form.control, name: "items" })
+  const { fields: panelSpecFields, append: appendPanelSpec, remove: removePanelSpec } = useFieldArray({
+    control: form.control,
+    name: "panelSpecs",
+  })
+  const { fields: techSpecFields, append: appendTechSpec, remove: removeTechSpec } = useFieldArray({
+    control: form.control,
+    name: "techSpecs",
+  })
+
+  const itemNameOptions = useMemo(
+    () => (techSpecItems ?? []).map((t) => ({ id: t.id, label: t.itemName })),
+    [techSpecItems],
+  )
+  const specOptions = useMemo(() => {
+    const seen = new Set<string>()
+    return (techSpecItems ?? [])
+      .filter((t) => {
+        if (seen.has(t.defaultSpec)) return false
+        seen.add(t.defaultSpec)
+        return true
+      })
+      .map((t) => ({ id: t.id, label: t.defaultSpec }))
+  }, [techSpecItems])
+  const [panelPickerValue, setPanelPickerValue] = useState("")
+  const panelOptions = useMemo(
+    () => (panels ?? []).map((p) => ({ id: p.id, label: p.name })),
+    [panels],
+  )
+
+  const [subjectTags, setSubjectTags] = useState<string[]>([])
+  function handleSubjectTagsChange(tags: string[]) {
+    setSubjectTags(tags)
+    form.setValue("subject", composeSubject(tags))
+  }
+
+  function handlePanelPick(opt: { id: number; label: string }) {
+    const panel = panels?.find((p) => p.id === opt.id)
+    if (!panel) return
+    append({
+      sNo: fields.length + 1,
+      description: panel.name,
+      qty: panel.defaultQty,
+      rate: panel.price,
+      amount: panel.defaultQty * panel.price,
+    })
+    appendPanelSpec({
+      sNo: panelSpecFields.length + 1,
+      panelName: panel.name,
+      breakdownText: panel.breakdownText,
+      panelSize: panel.panelSize,
+    })
+    setPanelPickerValue("")
+  }
+
   const watchItems = useWatch({ control: form.control, name: "items" })
   const watchDiscount = useWatch({ control: form.control, name: "discountPct" }) || 0
   const watchGst = useWatch({ control: form.control, name: "gstRate" }) || 0
@@ -129,6 +216,7 @@ export default function QuotationForm() {
 
   useEffect(() => {
     if (quotation) {
+      setSubjectTags(parseSubjectTags(quotation.subject || ""))
       form.reset({
         quotationNo: quotation.quotationNo,
         date: quotation.date.split("T")[0],
@@ -149,6 +237,17 @@ export default function QuotationForm() {
           qty: i.qty,
           rate: i.rate,
           amount: i.amount,
+        })),
+        panelSpecs: quotation.panelSpecs.map((p) => ({
+          sNo: p.sNo,
+          panelName: p.panelName,
+          breakdownText: p.breakdownText,
+          panelSize: p.panelSize,
+        })),
+        techSpecs: quotation.techSpecs.map((t) => ({
+          sNo: t.sNo,
+          itemName: t.itemName,
+          spec: t.spec,
         })),
       })
     }
@@ -247,12 +346,17 @@ export default function QuotationForm() {
                   <FormMessage />
                 </FormItem>
               )} />
-              <FormField control={form.control} name="subject" render={({ field }) => (
-                <FormItem className="md:col-span-3">
-                  <FormLabel>Subject</FormLabel>
-                  <FormControl><Input placeholder="Quotation for supply of electrical panels..." {...field} /></FormControl>
-                </FormItem>
-              )} />
+              <FormItem className="md:col-span-3">
+                <FormLabel>Subject</FormLabel>
+                <FormControl>
+                  <TagInput
+                    value={subjectTags}
+                    onValueChange={handleSubjectTagsChange}
+                    options={panelOptions}
+                    placeholder="Search panels from master e.g. 63A 4P MCCB..."
+                  />
+                </FormControl>
+              </FormItem>
             </CardContent>
           </Card>
 
@@ -352,6 +456,139 @@ export default function QuotationForm() {
                   </div>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Panel Specification */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle>Panel Specification</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-end gap-2">
+                <div className="flex-1 max-w-sm">
+                  <label className="text-sm font-medium mb-1 block">Add panel from master</label>
+                  <AutocompleteInput
+                    value={panelPickerValue}
+                    onValueChange={setPanelPickerValue}
+                    options={panelOptions}
+                    placeholder="Search panels e.g. 63A 4P MCCB..."
+                    onSuggestionSelect={handlePanelPick}
+                  />
+                </div>
+              </div>
+
+              {panelSpecFields.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No panels added yet.</p>
+              ) : (
+                <div className="space-y-4">
+                  {panelSpecFields.map((field, index) => (
+                    <div key={field.id} className="border rounded-md p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium">{form.watch(`panelSpecs.${index}.panelName`)}</span>
+                        <Button type="button" variant="ghost" size="icon"
+                          className="h-8 w-8 text-destructive" onClick={() => removePanelSpec(index)}>
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      <div>
+                        <label className="text-xs text-muted-foreground mb-1 block">Component Breakdown</label>
+                        <Controller
+                          control={form.control}
+                          name={`panelSpecs.${index}.breakdownText`}
+                          render={({ field }) => (
+                            <Textarea rows={4} className="text-sm" {...field} />
+                          )}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-muted-foreground mb-1 block">Panel Size</label>
+                        <Controller
+                          control={form.control}
+                          name={`panelSpecs.${index}.panelSize`}
+                          render={({ field }) => (
+                            <Input className="h-8" {...field} />
+                          )}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Technical Specification */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle>Technical Specification</CardTitle>
+              <Button type="button" variant="outline" size="sm"
+                onClick={() => appendTechSpec({ sNo: techSpecFields.length + 1, itemName: "", spec: "" })}>
+                <Plus className="w-4 h-4 mr-1" /> Add Row
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {techSpecFields.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No technical specification rows yet.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="text-xs text-muted-foreground bg-muted/50 border-y">
+                      <tr>
+                        <th className="p-2 w-12 text-center">#</th>
+                        <th className="p-2">Item</th>
+                        <th className="p-2">Spec / Note</th>
+                        <th className="p-2 w-10" />
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {techSpecFields.map((field, index) => (
+                        <tr key={field.id} className="hover:bg-muted/20">
+                          <td className="p-2 text-center text-muted-foreground">{index + 1}</td>
+                          <td className="p-2">
+                            <Controller
+                              control={form.control}
+                              name={`techSpecs.${index}.itemName`}
+                              render={({ field }) => (
+                                <AutocompleteInput
+                                  value={field.value}
+                                  onValueChange={field.onChange}
+                                  options={itemNameOptions}
+                                  placeholder="e.g. SHEET"
+                                  onSuggestionSelect={(opt) => {
+                                    const match = techSpecItems?.find((t) => t.id === opt.id)
+                                    if (match) form.setValue(`techSpecs.${index}.spec`, match.defaultSpec)
+                                  }}
+                                />
+                              )}
+                            />
+                          </td>
+                          <td className="p-2">
+                            <Controller
+                              control={form.control}
+                              name={`techSpecs.${index}.spec`}
+                              render={({ field }) => (
+                                <AutocompleteInput
+                                  value={field.value ?? ""}
+                                  onValueChange={field.onChange}
+                                  options={specOptions}
+                                  placeholder="e.g. Tata Sheet usage only"
+                                />
+                              )}
+                            />
+                          </td>
+                          <td className="p-2">
+                            <Button type="button" variant="ghost" size="icon"
+                              className="h-8 w-8 text-destructive" onClick={() => removeTechSpec(index)}>
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </CardContent>
           </Card>
 

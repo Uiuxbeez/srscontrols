@@ -12,6 +12,23 @@ export interface QuotationItem {
   amount: number
 }
 
+export interface QuotationPanelSpec {
+  id: number
+  quotationId: number
+  sNo: number
+  panelName: string
+  breakdownText: string
+  panelSize: string
+}
+
+export interface QuotationTechSpec {
+  id: number
+  quotationId: number
+  sNo: number
+  itemName: string
+  spec: string
+}
+
 export interface QuotationClient {
   id: number
   name: string
@@ -46,6 +63,8 @@ export interface Quotation {
   createdAt: string
   client: QuotationClient
   items: QuotationItem[]
+  panelSpecs: QuotationPanelSpec[]
+  techSpecs: QuotationTechSpec[]
 }
 
 export interface QuotationListItem {
@@ -79,6 +98,17 @@ export interface CreateQuotationInput {
     qty?: number | null
     rate?: number | null
     amount: number
+  }>
+  panelSpecs?: Array<{
+    sNo: number
+    panelName: string
+    breakdownText: string
+    panelSize: string
+  }>
+  techSpecs?: Array<{
+    sNo: number
+    itemName: string
+    spec: string
   }>
 }
 

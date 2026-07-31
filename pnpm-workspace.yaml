@@ -161,3 +161,4 @@ overrides:
 
 allowBuilds:
   esbuild: true
+  puppeteer: true
