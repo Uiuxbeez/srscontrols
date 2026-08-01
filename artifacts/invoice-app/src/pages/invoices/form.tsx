@@ -105,7 +105,7 @@ export default function InvoiceForm() {
       termsOfDelivery: "",
       cgstRate: 9,
       sgstRate: 9,
-      items: [{ sNo: 1, description: "", hsnSac: "", qty: 1, rate: 0, per: "Nos", amount: 0 }]
+      items: [{ sNo: 1, description: "", hsnSac: "8537", qty: 1, rate: 0, per: "Nos", amount: 0 }]
     },
   })
 
@@ -349,7 +349,7 @@ export default function InvoiceForm() {
                 type="button" 
                 variant="outline" 
                 size="sm" 
-                onClick={() => append({ sNo: fields.length + 1, description: "", hsnSac: "", qty: 1, rate: 0, per: "Nos", amount: 0 })}
+                onClick={() => append({ sNo: fields.length + 1, description: "", hsnSac: "8537", qty: 1, rate: 0, per: "Nos", amount: 0 })}
               >
                 <Plus className="w-4 h-4 mr-1" /> Add Row
               </Button>

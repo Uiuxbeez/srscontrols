@@ -6,6 +6,9 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './category';
+export * from './categoryInput';
+export * from './categoryUpdate';
 export * from './client';
 export * from './clientInput';
 export * from './clientUpdate';
@@ -18,11 +21,19 @@ export * from './invoiceItemInput';
 export * from './invoiceStats';
 export * from './invoiceSummary';
 export * from './invoiceUpdate';
+export * from './item';
+export * from './itemInput';
+export * from './itemUpdate';
 export * from './listInvoicesParams';
+export * from './listItemsParams';
+export * from './listSubCategoriesParams';
 export * from './nextInvoiceNumber';
 export * from './panel';
 export * from './panelInput';
 export * from './panelUpdate';
+export * from './subCategory';
+export * from './subCategoryInput';
+export * from './subCategoryUpdate';
 export * from './successResponse';
 export * from './techSpecItem';
 export * from './techSpecItemInput';

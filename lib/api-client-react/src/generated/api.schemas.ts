@@ -102,6 +102,80 @@ export interface TechSpecItemUpdate {
   defaultSpec?: string;
 }
 
+export interface Category {
+  id: number;
+  name: string;
+  createdAt?: string;
+}
+
+export interface CategoryInput {
+  /** @minLength 1 */
+  name: string;
+}
+
+export interface CategoryUpdate {
+  /** @minLength 1 */
+  name?: string;
+}
+
+export interface SubCategory {
+  id: number;
+  categoryId: number;
+  name: string;
+  createdAt?: string;
+}
+
+export interface SubCategoryInput {
+  categoryId: number;
+  /** @minLength 1 */
+  name: string;
+}
+
+export interface SubCategoryUpdate {
+  categoryId?: number;
+  /** @minLength 1 */
+  name?: string;
+}
+
+export interface Item {
+  id: number;
+  subCategoryId: number;
+  name: string;
+  /** @nullable */
+  catNo?: string | null;
+  /** @nullable */
+  price?: number | null;
+  /** @nullable */
+  packQty?: number | null;
+  /** @nullable */
+  specifications?: string | null;
+  createdAt?: string;
+}
+
+export interface ItemInput {
+  subCategoryId: number;
+  /** @minLength 1 */
+  name: string;
+  catNo?: string;
+  /** @minimum 0 */
+  price?: number;
+  /** @minimum 0 */
+  packQty?: number;
+  specifications?: string;
+}
+
+export interface ItemUpdate {
+  subCategoryId?: number;
+  /** @minLength 1 */
+  name?: string;
+  catNo?: string;
+  /** @minimum 0 */
+  price?: number;
+  /** @minimum 0 */
+  packQty?: number;
+  specifications?: string;
+}
+
 export interface InvoiceItem {
   id: number;
   invoiceId: number;
@@ -236,6 +310,14 @@ export interface InvoiceStats {
 export interface NextInvoiceNumber {
   nextNumber: number;
 }
+
+export type ListSubCategoriesParams = {
+categoryId?: number;
+};
+
+export type ListItemsParams = {
+subCategoryId?: number;
+};
 
 export type ListInvoicesParams = {
 clientId?: number;

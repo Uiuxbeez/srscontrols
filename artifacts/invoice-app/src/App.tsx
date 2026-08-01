@@ -18,6 +18,8 @@ import PanelsList from '@/pages/panels/list';
 import PanelForm from '@/pages/panels/form';
 import TechSpecItemsList from '@/pages/tech-spec-items/list';
 import TechSpecItemForm from '@/pages/tech-spec-items/form';
+import ItemMasterList from '@/pages/item-master/list';
+import ItemMasterImport from '@/pages/item-master/import';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -60,6 +62,10 @@ function Router() {
         <Route path="/tech-spec-items" component={TechSpecItemsList} />
         <Route path="/tech-spec-items/new" component={TechSpecItemForm} />
         <Route path="/tech-spec-items/:id/edit" component={TechSpecItemForm} />
+
+        {/* Item Master */}
+        <Route path="/item-master" component={ItemMasterList} />
+        <Route path="/item-master/import" component={ItemMasterImport} />
 
         <Route component={NotFound} />
       </Switch>

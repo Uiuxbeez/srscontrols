@@ -9,6 +9,7 @@ import {
   ListChecks,
   Layers,
   ChevronDown,
+  Package,
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -22,6 +23,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { label: "Invoices", href: "/invoices", icon: FileText },
     { label: "Quotations", href: "/quotations", icon: ClipboardList },
     { label: "Clients", href: "/clients", icon: Users },
+    { label: "Item Master", href: "/item-master", icon: Package },
   ];
 
   const quotationMasterItems = [

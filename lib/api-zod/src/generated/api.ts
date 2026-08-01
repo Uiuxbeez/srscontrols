@@ -305,6 +305,283 @@ export const DeleteTechSpecItemResponse = zod.object({
 
 
 /**
+ * @summary List all categories
+ */
+export const ListCategoriesResponseItem = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "createdAt": zod.string().optional()
+})
+export const ListCategoriesResponse = zod.array(ListCategoriesResponseItem)
+
+
+/**
+ * @summary Create a category
+ */
+
+
+
+export const CreateCategoryBody = zod.object({
+  "name": zod.string().min(1)
+})
+
+export const CreateCategoryResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "createdAt": zod.string().optional()
+})
+
+
+/**
+ * @summary Get a category by ID
+ */
+export const GetCategoryParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetCategoryResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "createdAt": zod.string().optional()
+})
+
+
+/**
+ * @summary Update a category
+ */
+export const UpdateCategoryParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+
+
+export const UpdateCategoryBody = zod.object({
+  "name": zod.string().min(1).optional()
+})
+
+export const UpdateCategoryResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "createdAt": zod.string().optional()
+})
+
+
+/**
+ * @summary Delete a category
+ */
+export const DeleteCategoryParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteCategoryResponse = zod.object({
+  "success": zod.boolean()
+})
+
+
+/**
+ * @summary List sub-categories, optionally filtered by category
+ */
+export const ListSubCategoriesQueryParams = zod.object({
+  "categoryId": zod.coerce.number().optional()
+})
+
+export const ListSubCategoriesResponseItem = zod.object({
+  "id": zod.number(),
+  "categoryId": zod.number(),
+  "name": zod.string(),
+  "createdAt": zod.string().optional()
+})
+export const ListSubCategoriesResponse = zod.array(ListSubCategoriesResponseItem)
+
+
+/**
+ * @summary Create a sub-category
+ */
+
+
+
+export const CreateSubCategoryBody = zod.object({
+  "categoryId": zod.number(),
+  "name": zod.string().min(1)
+})
+
+export const CreateSubCategoryResponse = zod.object({
+  "id": zod.number(),
+  "categoryId": zod.number(),
+  "name": zod.string(),
+  "createdAt": zod.string().optional()
+})
+
+
+/**
+ * @summary Get a sub-category by ID
+ */
+export const GetSubCategoryParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetSubCategoryResponse = zod.object({
+  "id": zod.number(),
+  "categoryId": zod.number(),
+  "name": zod.string(),
+  "createdAt": zod.string().optional()
+})
+
+
+/**
+ * @summary Update a sub-category
+ */
+export const UpdateSubCategoryParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+
+
+export const UpdateSubCategoryBody = zod.object({
+  "categoryId": zod.number().optional(),
+  "name": zod.string().min(1).optional()
+})
+
+export const UpdateSubCategoryResponse = zod.object({
+  "id": zod.number(),
+  "categoryId": zod.number(),
+  "name": zod.string(),
+  "createdAt": zod.string().optional()
+})
+
+
+/**
+ * @summary Delete a sub-category
+ */
+export const DeleteSubCategoryParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteSubCategoryResponse = zod.object({
+  "success": zod.boolean()
+})
+
+
+/**
+ * @summary List items, optionally filtered by sub-category
+ */
+export const ListItemsQueryParams = zod.object({
+  "subCategoryId": zod.coerce.number().optional()
+})
+
+export const ListItemsResponseItem = zod.object({
+  "id": zod.number(),
+  "subCategoryId": zod.number(),
+  "name": zod.string(),
+  "catNo": zod.string().nullish(),
+  "price": zod.number().nullish(),
+  "packQty": zod.number().nullish(),
+  "specifications": zod.string().nullish(),
+  "createdAt": zod.string().optional()
+})
+export const ListItemsResponse = zod.array(ListItemsResponseItem)
+
+
+/**
+ * @summary Create an item
+ */
+
+export const createItemBodyPriceMin = 0;
+
+export const createItemBodyPackQtyMin = 0;
+
+
+
+export const CreateItemBody = zod.object({
+  "subCategoryId": zod.number(),
+  "name": zod.string().min(1),
+  "catNo": zod.string().optional(),
+  "price": zod.number().min(createItemBodyPriceMin).optional(),
+  "packQty": zod.number().min(createItemBodyPackQtyMin).optional(),
+  "specifications": zod.string().optional()
+})
+
+export const CreateItemResponse = zod.object({
+  "id": zod.number(),
+  "subCategoryId": zod.number(),
+  "name": zod.string(),
+  "catNo": zod.string().nullish(),
+  "price": zod.number().nullish(),
+  "packQty": zod.number().nullish(),
+  "specifications": zod.string().nullish(),
+  "createdAt": zod.string().optional()
+})
+
+
+/**
+ * @summary Get an item by ID
+ */
+export const GetItemParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetItemResponse = zod.object({
+  "id": zod.number(),
+  "subCategoryId": zod.number(),
+  "name": zod.string(),
+  "catNo": zod.string().nullish(),
+  "price": zod.number().nullish(),
+  "packQty": zod.number().nullish(),
+  "specifications": zod.string().nullish(),
+  "createdAt": zod.string().optional()
+})
+
+
+/**
+ * @summary Update an item
+ */
+export const UpdateItemParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+export const updateItemBodyPriceMin = 0;
+
+export const updateItemBodyPackQtyMin = 0;
+
+
+
+export const UpdateItemBody = zod.object({
+  "subCategoryId": zod.number().optional(),
+  "name": zod.string().min(1).optional(),
+  "catNo": zod.string().optional(),
+  "price": zod.number().min(updateItemBodyPriceMin).optional(),
+  "packQty": zod.number().min(updateItemBodyPackQtyMin).optional(),
+  "specifications": zod.string().optional()
+})
+
+export const UpdateItemResponse = zod.object({
+  "id": zod.number(),
+  "subCategoryId": zod.number(),
+  "name": zod.string(),
+  "catNo": zod.string().nullish(),
+  "price": zod.number().nullish(),
+  "packQty": zod.number().nullish(),
+  "specifications": zod.string().nullish(),
+  "createdAt": zod.string().optional()
+})
+
+
+/**
+ * @summary Delete an item
+ */
+export const DeleteItemParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteItemResponse = zod.object({
+  "success": zod.boolean()
+})
+
+
+/**
  * @summary Get invoice statistics for dashboard
  */
 export const GetInvoiceStatsResponse = zod.object({

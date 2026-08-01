@@ -18,6 +18,12 @@ tags:
     description: Panel master (name, component breakdown, size, price)
   - name: tech-spec-items
     description: Technical specification master (item name / default spec pairs)
+  - name: categories
+    description: Item Master categories
+  - name: sub-categories
+    description: Item Master sub-categories
+  - name: items
+    description: Item Master items
 
 paths:
   /healthz:
@@ -360,6 +366,343 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /categories:
+    get:
+      operationId: listCategories
+      tags: [categories]
+      summary: List all categories
+      responses:
+        "200":
+          description: List of categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Category"
+    post:
+      operationId: createCategory
+      tags: [categories]
+      summary: Create a category
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CategoryInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+
+  /categories/{id}:
+    get:
+      operationId: getCategory
+      tags: [categories]
+      summary: Get a category by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Category
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateCategory
+      tags: [categories]
+      summary: Update a category
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CategoryUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteCategory
+      tags: [categories]
+      summary: Delete a category
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /sub-categories:
+    get:
+      operationId: listSubCategories
+      tags: [sub-categories]
+      summary: List sub-categories, optionally filtered by category
+      parameters:
+        - name: categoryId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of sub-categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SubCategory"
+    post:
+      operationId: createSubCategory
+      tags: [sub-categories]
+      summary: Create a sub-category
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubCategoryInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubCategory"
+
+  /sub-categories/{id}:
+    get:
+      operationId: getSubCategory
+      tags: [sub-categories]
+      summary: Get a sub-category by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Sub-category
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubCategory"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateSubCategory
+      tags: [sub-categories]
+      summary: Update a sub-category
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubCategoryUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubCategory"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteSubCategory
+      tags: [sub-categories]
+      summary: Delete a sub-category
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /items:
+    get:
+      operationId: listItems
+      tags: [items]
+      summary: List items, optionally filtered by sub-category
+      parameters:
+        - name: subCategoryId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Item"
+    post:
+      operationId: createItem
+      tags: [items]
+      summary: Create an item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ItemInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Item"
+
+  /items/{id}:
+    get:
+      operationId: getItem
+      tags: [items]
+      summary: Get an item by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Item"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateItem
+      tags: [items]
+      summary: Update an item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ItemUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Item"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteItem
+      tags: [items]
+      summary: Delete an item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /invoices/stats:
     get:
       operationId: getInvoiceStats
@@ -680,6 +1023,124 @@ components:
         defaultSpec:
           type: string
           minLength: 1
+
+    Category:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        createdAt:
+          type: string
+
+    CategoryInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 1
+
+    CategoryUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+
+    SubCategory:
+      type: object
+      required: [id, categoryId, name]
+      properties:
+        id:
+          type: integer
+        categoryId:
+          type: integer
+        name:
+          type: string
+        createdAt:
+          type: string
+
+    SubCategoryInput:
+      type: object
+      required: [categoryId, name]
+      properties:
+        categoryId:
+          type: integer
+        name:
+          type: string
+          minLength: 1
+
+    SubCategoryUpdate:
+      type: object
+      properties:
+        categoryId:
+          type: integer
+        name:
+          type: string
+          minLength: 1
+
+    Item:
+      type: object
+      required: [id, subCategoryId, name]
+      properties:
+        id:
+          type: integer
+        subCategoryId:
+          type: integer
+        name:
+          type: string
+        catNo:
+          type: ["string", "null"]
+        price:
+          type: ["number", "null"]
+        packQty:
+          type: ["integer", "null"]
+        specifications:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    ItemInput:
+      type: object
+      required: [subCategoryId, name]
+      properties:
+        subCategoryId:
+          type: integer
+        name:
+          type: string
+          minLength: 1
+        catNo:
+          type: string
+        price:
+          type: number
+          minimum: 0
+        packQty:
+          type: integer
+          minimum: 0
+        specifications:
+          type: string
+
+    ItemUpdate:
+      type: object
+      properties:
+        subCategoryId:
+          type: integer
+        name:
+          type: string
+          minLength: 1
+        catNo:
+          type: string
+        price:
+          type: number
+          minimum: 0
+        packQty:
+          type: integer
+          minimum: 0
+        specifications:
+          type: string
 
     InvoiceItem:
       type: object

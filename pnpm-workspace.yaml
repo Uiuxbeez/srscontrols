@@ -73,6 +73,7 @@ onlyBuiltDependencies:
   - esbuild
   - msw
   - unrs-resolver
+  - tesseract.js
 
 overrides:
   # replit uses linux-x64 only, we can exclude all other platforms
@@ -162,3 +163,4 @@ overrides:
 allowBuilds:
   esbuild: true
   puppeteer: true
+  tesseract.js: set this to true or false
