@@ -117,7 +117,7 @@ function AuthGate() {
     <div className="relative min-h-screen bg-black overflow-hidden">
       <LightningText text="SRS CONTROLS" className="absolute inset-0" yFraction={0.32} />
       {introDone && !isLoading && !user && (
-        <div className="absolute inset-0 flex items-end justify-center px-4 pb-20">
+        <div className="absolute inset-0 flex items-end justify-center px-4 pb-50">
           <LoginCard />
         </div>
       )}
