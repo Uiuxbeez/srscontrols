@@ -21,6 +21,7 @@ const PanelSpecSchema = z.object({
   panelName: z.string().min(1),
   breakdownText: z.string().default(""),
   panelSize: z.string().default(""),
+  frameSize: z.string().default(""),
 });
 
 const TechSpecSchema = z.object({
@@ -203,6 +204,7 @@ router.post("/quotations", async (req, res): Promise<void> => {
         panelName: spec.panelName,
         breakdownText: spec.breakdownText,
         panelSize: spec.panelSize,
+        frameSize: spec.frameSize,
       })),
     );
   }
@@ -260,6 +262,7 @@ router.patch("/quotations/:id", async (req, res): Promise<void> => {
           panelName: spec.panelName,
           breakdownText: spec.breakdownText,
           panelSize: spec.panelSize,
+          frameSize: spec.frameSize,
         })),
       );
     }

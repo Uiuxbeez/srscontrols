@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Plus, Edit, Trash2 } from "lucide-react"
+import { Plus, Edit, Trash2, Upload } from "lucide-react"
 import { Link } from "wouter"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/hooks/use-toast"
@@ -44,9 +44,14 @@ export default function TechSpecItemsList() {
           <h1 className="text-2xl font-bold tracking-tight">Tech Spec Master</h1>
           <p className="text-muted-foreground">Manage item / default spec pairs used in quotation technical specifications.</p>
         </div>
-        <Link href="/tech-spec-items/new" className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2">
-          <Plus className="mr-2 w-4 h-4" /> Add Item
-        </Link>
+        <div className="flex gap-2">
+          <Link href="/tech-spec-items/bulk-upload" className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2">
+            <Upload className="mr-2 w-4 h-4" /> Bulk Upload
+          </Link>
+          <Link href="/tech-spec-items/new" className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2">
+            <Plus className="mr-2 w-4 h-4" /> Add Item
+          </Link>
+        </div>
       </div>
 
       <Card>

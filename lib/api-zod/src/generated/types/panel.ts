@@ -5,12 +5,17 @@
  * SRS Invoice Manager API
  * OpenAPI spec version: 0.1.0
  */
+import type { PanelCategory } from './panelCategory';
 
 export interface Panel {
   id: number;
   name: string;
+  category: PanelCategory;
   breakdownText: string;
+  /** Internal-only JSON array of per-component prices, aligned by index to breakdownText's lines. Never surfaced on printed quotations. */
+  componentPricing?: string;
   panelSize: string;
+  frameSize?: string;
   price: number;
   defaultQty: number;
   createdAt?: string;

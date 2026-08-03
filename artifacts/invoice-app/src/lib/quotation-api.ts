@@ -19,6 +19,7 @@ export interface QuotationPanelSpec {
   panelName: string
   breakdownText: string
   panelSize: string
+  frameSize: string
 }
 
 export interface QuotationTechSpec {
@@ -104,6 +105,7 @@ export interface CreateQuotationInput {
     panelName: string
     breakdownText: string
     panelSize: string
+    frameSize: string
   }>
   techSpecs?: Array<{
     sNo: number

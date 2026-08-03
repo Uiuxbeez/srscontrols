@@ -59,6 +59,7 @@ Open http://localhost:5173 in your browser.
 | `DATABASE_URL` | Postgres connection string | `postgresql://user:pass@localhost:5432/srs` |
 | `PORT` | API server port (default 3001) | `3001` |
 | `SESSION_SECRET` | Express session secret | any random string |
+| `ANTHROPIC_API_KEY` | Anthropic API key, used to read Tech Spec bulk-upload images | `sk-ant-...` |
 
 ---
 

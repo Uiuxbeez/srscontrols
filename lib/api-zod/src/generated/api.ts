@@ -122,8 +122,11 @@ export const DeleteClientResponse = zod.object({
 export const ListPanelsResponseItem = zod.object({
   "id": zod.number(),
   "name": zod.string(),
+  "category": zod.enum(['Manufacturing', 'Licensing', 'Erection', 'Trading']),
   "breakdownText": zod.string(),
+  "componentPricing": zod.string().optional().describe('Internal-only JSON array of per-component prices, aligned by index to breakdownText\'s lines. Never surfaced on printed quotations.'),
   "panelSize": zod.string(),
+  "frameSize": zod.string().optional(),
   "price": zod.number(),
   "defaultQty": zod.number(),
   "createdAt": zod.string().optional()
@@ -142,8 +145,11 @@ export const createPanelBodyPriceMin = 0;
 
 export const CreatePanelBody = zod.object({
   "name": zod.string().min(1),
+  "category": zod.enum(['Manufacturing', 'Licensing', 'Erection', 'Trading']),
   "breakdownText": zod.string().optional(),
+  "componentPricing": zod.string().optional(),
   "panelSize": zod.string().optional(),
+  "frameSize": zod.string().optional(),
   "price": zod.number().min(createPanelBodyPriceMin).optional(),
   "defaultQty": zod.number().min(1).optional()
 })
@@ -151,8 +157,11 @@ export const CreatePanelBody = zod.object({
 export const CreatePanelResponse = zod.object({
   "id": zod.number(),
   "name": zod.string(),
+  "category": zod.enum(['Manufacturing', 'Licensing', 'Erection', 'Trading']),
   "breakdownText": zod.string(),
+  "componentPricing": zod.string().optional().describe('Internal-only JSON array of per-component prices, aligned by index to breakdownText\'s lines. Never surfaced on printed quotations.'),
   "panelSize": zod.string(),
+  "frameSize": zod.string().optional(),
   "price": zod.number(),
   "defaultQty": zod.number(),
   "createdAt": zod.string().optional()
@@ -169,8 +178,11 @@ export const GetPanelParams = zod.object({
 export const GetPanelResponse = zod.object({
   "id": zod.number(),
   "name": zod.string(),
+  "category": zod.enum(['Manufacturing', 'Licensing', 'Erection', 'Trading']),
   "breakdownText": zod.string(),
+  "componentPricing": zod.string().optional().describe('Internal-only JSON array of per-component prices, aligned by index to breakdownText\'s lines. Never surfaced on printed quotations.'),
   "panelSize": zod.string(),
+  "frameSize": zod.string().optional(),
   "price": zod.number(),
   "defaultQty": zod.number(),
   "createdAt": zod.string().optional()
@@ -192,8 +204,11 @@ export const updatePanelBodyPriceMin = 0;
 
 export const UpdatePanelBody = zod.object({
   "name": zod.string().min(1).optional(),
+  "category": zod.enum(['Manufacturing', 'Licensing', 'Erection', 'Trading']).optional(),
   "breakdownText": zod.string().optional(),
+  "componentPricing": zod.string().optional(),
   "panelSize": zod.string().optional(),
+  "frameSize": zod.string().optional(),
   "price": zod.number().min(updatePanelBodyPriceMin).optional(),
   "defaultQty": zod.number().min(1).optional()
 })
@@ -201,8 +216,11 @@ export const UpdatePanelBody = zod.object({
 export const UpdatePanelResponse = zod.object({
   "id": zod.number(),
   "name": zod.string(),
+  "category": zod.enum(['Manufacturing', 'Licensing', 'Erection', 'Trading']),
   "breakdownText": zod.string(),
+  "componentPricing": zod.string().optional().describe('Internal-only JSON array of per-component prices, aligned by index to breakdownText\'s lines. Never surfaced on printed quotations.'),
   "panelSize": zod.string(),
+  "frameSize": zod.string().optional(),
   "price": zod.number(),
   "defaultQty": zod.number(),
   "createdAt": zod.string().optional()

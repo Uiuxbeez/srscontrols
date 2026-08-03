@@ -10,13 +10,17 @@ import {
   Layers,
   ChevronDown,
   Package,
+  LogOut,
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { Button } from "@/components/ui/button"
+import { useLogout } from "@/lib/auth-api"
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
+  const logout = useLogout();
 
   const navItems = [
     { label: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -110,6 +114,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </CollapsibleContent>
           </Collapsible>
         </nav>
+        <div className="p-4 border-t">
+          <Button
+            type="button"
+            variant="ghost"
+            className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground"
+            onClick={() => logout.mutate()}
+            disabled={logout.isPending}
+          >
+            <LogOut className="w-4 h-4" />
+            {logout.isPending ? "Signing out..." : "Sign Out"}
+          </Button>
+        </div>
       </aside>
 
       {/* Main Content */}

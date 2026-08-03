@@ -938,15 +938,23 @@ components:
 
     Panel:
       type: object
-      required: [id, name, breakdownText, panelSize, price, defaultQty]
+      required: [id, name, category, breakdownText, panelSize, price, defaultQty]
       properties:
         id:
           type: integer
         name:
           type: string
+        category:
+          type: string
+          enum: [Manufacturing, Licensing, Erection, Trading]
         breakdownText:
           type: string
+        componentPricing:
+          type: string
+          description: Internal-only JSON array of per-component prices, aligned by index to breakdownText's lines. Never surfaced on printed quotations.
         panelSize:
+          type: string
+        frameSize:
           type: string
         price:
           type: number
@@ -957,14 +965,21 @@ components:
 
     PanelInput:
       type: object
-      required: [name]
+      required: [name, category]
       properties:
         name:
           type: string
           minLength: 1
+        category:
+          type: string
+          enum: [Manufacturing, Licensing, Erection, Trading]
         breakdownText:
           type: string
+        componentPricing:
+          type: string
         panelSize:
+          type: string
+        frameSize:
           type: string
         price:
           type: number
@@ -979,9 +994,16 @@ components:
         name:
           type: string
           minLength: 1
+        category:
+          type: string
+          enum: [Manufacturing, Licensing, Erection, Trading]
         breakdownText:
           type: string
+        componentPricing:
+          type: string
         panelSize:
+          type: string
+        frameSize:
           type: string
         price:
           type: number

@@ -22,6 +22,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { AutocompleteInput } from "@/components/ui/autocomplete-input"
 import { TagInput } from "@/components/ui/tag-input"
+import { Checkbox } from "@/components/ui/checkbox"
 import { useToast } from "@/hooks/use-toast"
 import { ArrowLeft, Save, Plus, Trash2 } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -39,6 +40,7 @@ const panelSpecSchema = z.object({
   panelName: z.string().min(1),
   breakdownText: z.string().optional().default(""),
   panelSize: z.string().optional().default(""),
+  frameSize: z.string().optional().default(""),
 })
 
 const techSpecSchema = z.object({
@@ -148,7 +150,22 @@ export default function QuotationForm() {
       })
       .map((t) => ({ id: t.id, label: t.defaultSpec }))
   }, [techSpecItems])
-  const [panelPickerValue, setPanelPickerValue] = useState("")
+
+  const watchedTechSpecs = useWatch({ control: form.control, name: "techSpecs" }) ?? []
+  const selectedTechSpecNames = useMemo(
+    () => new Set(watchedTechSpecs.map((t) => (t?.itemName ?? "").trim().toLowerCase()).filter(Boolean)),
+    [watchedTechSpecs],
+  )
+
+  function toggleTechSpecItem(item: { itemName: string; defaultSpec: string }) {
+    const key = item.itemName.trim().toLowerCase()
+    if (selectedTechSpecNames.has(key)) {
+      const idx = watchedTechSpecs.findIndex((t) => (t?.itemName ?? "").trim().toLowerCase() === key)
+      if (idx !== -1) removeTechSpec(idx)
+    } else {
+      appendTechSpec({ sNo: techSpecFields.length + 1, itemName: item.itemName, spec: item.defaultSpec })
+    }
+  }
   const panelOptions = useMemo(
     () => (panels ?? []).map((p) => ({ id: p.id, label: p.name })),
     [panels],
@@ -160,23 +177,54 @@ export default function QuotationForm() {
     form.setValue("subject", composeSubject(tags))
   }
 
-  function handlePanelPick(opt: { id: number; label: string }) {
-    const panel = panels?.find((p) => p.id === opt.id)
-    if (!panel) return
-    append({
-      sNo: fields.length + 1,
-      description: panel.name,
-      qty: panel.defaultQty,
-      rate: panel.price,
-      amount: panel.defaultQty * panel.price,
-    })
-    appendPanelSpec({
-      sNo: panelSpecFields.length + 1,
-      panelName: panel.name,
-      breakdownText: panel.breakdownText,
-      panelSize: panel.panelSize,
-    })
-    setPanelPickerValue("")
+  const watchedPanelSpecs = useWatch({ control: form.control, name: "panelSpecs" }) ?? []
+  const selectedPanelNames = useMemo(
+    () => new Set(watchedPanelSpecs.map((p) => (p?.panelName ?? "").trim().toLowerCase()).filter(Boolean)),
+    [watchedPanelSpecs],
+  )
+
+  function togglePanel(panel: NonNullable<typeof panels>[number]) {
+    const key = panel.name.trim().toLowerCase()
+    if (selectedPanelNames.has(key)) {
+      const specIdx = watchedPanelSpecs.findIndex((p) => (p?.panelName ?? "").trim().toLowerCase() === key)
+      if (specIdx !== -1) removePanelSpec(specIdx)
+      const items = form.getValues("items")
+      const itemIdx = items.findIndex((i) => i.description === panel.name)
+      if (itemIdx !== -1) remove(itemIdx)
+    } else {
+      append({
+        sNo: fields.length + 1,
+        description: panel.name,
+        qty: panel.defaultQty,
+        rate: panel.price,
+        amount: panel.defaultQty * panel.price,
+      })
+      appendPanelSpec({
+        sNo: panelSpecFields.length + 1,
+        panelName: panel.name,
+        breakdownText: "",
+        panelSize: panel.panelSize,
+        frameSize: panel.frameSize ?? "",
+      })
+    }
+  }
+
+  function getPanelBreakdownLines(panelName: string): string[] {
+    const panel = panels?.find((p) => p.name === panelName)
+    if (!panel) return []
+    return panel.breakdownText.split("\n").map((l) => l.trim()).filter(Boolean)
+  }
+
+  function togglePanelBreakdownLine(specIndex: number, masterLines: string[], line: string) {
+    const current = (form.getValues(`panelSpecs.${specIndex}.breakdownText`) ?? "")
+      .split("\n").map((l) => l.trim()).filter(Boolean)
+    const has = current.includes(line)
+    const next = has ? current.filter((l) => l !== line) : [...current, line]
+    // Keep master-list lines in their original order; anything hand-typed that
+    // isn't part of the master list is preserved, appended after.
+    const ordered = masterLines.filter((l) => next.includes(l))
+    const extras = next.filter((l) => !masterLines.includes(l))
+    form.setValue(`panelSpecs.${specIndex}.breakdownText`, [...ordered, ...extras].join("\n"))
   }
 
   const watchItems = useWatch({ control: form.control, name: "items" })
@@ -243,6 +291,7 @@ export default function QuotationForm() {
           panelName: p.panelName,
           breakdownText: p.breakdownText,
           panelSize: p.panelSize,
+          frameSize: p.frameSize,
         })),
         techSpecs: quotation.techSpecs.map((t) => ({
           sNo: t.sNo,
@@ -465,54 +514,100 @@ export default function QuotationForm() {
               <CardTitle>Panel Specification</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-end gap-2">
-                <div className="flex-1 max-w-sm">
-                  <label className="text-sm font-medium mb-1 block">Add panel from master</label>
-                  <AutocompleteInput
-                    value={panelPickerValue}
-                    onValueChange={setPanelPickerValue}
-                    options={panelOptions}
-                    placeholder="Search panels e.g. 63A 4P MCCB..."
-                    onSuggestionSelect={handlePanelPick}
-                  />
-                </div>
+              <div>
+                <label className="text-sm font-medium mb-2 block">Add panel from master</label>
+                {!panels?.length ? (
+                  <p className="text-sm text-muted-foreground">No panels yet — add some in Panel Master first.</p>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 max-h-64 overflow-y-auto border rounded-md p-3">
+                    {panels.map((panel) => {
+                      const checked = selectedPanelNames.has(panel.name.trim().toLowerCase())
+                      return (
+                        <label key={panel.id} className="flex items-start gap-2 text-sm cursor-pointer">
+                          <Checkbox checked={checked} onCheckedChange={() => togglePanel(panel)} className="mt-0.5" />
+                          <span>{panel.name}</span>
+                        </label>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
 
               {panelSpecFields.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No panels added yet.</p>
               ) : (
                 <div className="space-y-4">
-                  {panelSpecFields.map((field, index) => (
-                    <div key={field.id} className="border rounded-md p-4 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium">{form.watch(`panelSpecs.${index}.panelName`)}</span>
-                        <Button type="button" variant="ghost" size="icon"
-                          className="h-8 w-8 text-destructive" onClick={() => removePanelSpec(index)}>
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                      <div>
-                        <label className="text-xs text-muted-foreground mb-1 block">Component Breakdown</label>
-                        <Controller
-                          control={form.control}
-                          name={`panelSpecs.${index}.breakdownText`}
-                          render={({ field }) => (
-                            <Textarea rows={4} className="text-sm" {...field} />
+                  {panelSpecFields.map((field, index) => {
+                    const panelName = form.watch(`panelSpecs.${index}.panelName`)
+                    const masterLines = getPanelBreakdownLines(panelName)
+                    const currentText = form.watch(`panelSpecs.${index}.breakdownText`) ?? ""
+                    const selectedLines = new Set(currentText.split("\n").map((l) => l.trim()).filter(Boolean))
+
+                    return (
+                      <div key={field.id} className="border rounded-md p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">{panelName}</span>
+                          <Button type="button" variant="ghost" size="icon"
+                            className="h-8 w-8 text-destructive" onClick={() => removePanelSpec(index)}>
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                        <div>
+                          <label className="text-xs text-muted-foreground mb-1 block">
+                            Component Breakdown — choose which apply to this quotation
+                          </label>
+                          {masterLines.length === 0 ? (
+                            <p className="text-sm text-muted-foreground">This panel has no component breakdown in Panel Master.</p>
+                          ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 border rounded-md p-3">
+                              {masterLines.map((line) => (
+                                <label key={line} className="flex items-start gap-2 text-sm cursor-pointer">
+                                  <Checkbox
+                                    checked={selectedLines.has(line)}
+                                    onCheckedChange={() => togglePanelBreakdownLine(index, masterLines, line)}
+                                    className="mt-0.5"
+                                  />
+                                  <span>{line}</span>
+                                </label>
+                              ))}
+                            </div>
                           )}
-                        />
+                        </div>
+                        <div>
+                          <label className="text-xs text-muted-foreground mb-1 block">Fine-tune wording (optional)</label>
+                          <Controller
+                            control={form.control}
+                            name={`panelSpecs.${index}.breakdownText`}
+                            render={({ field }) => (
+                              <Textarea rows={3} className="text-sm" {...field} />
+                            )}
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="text-xs text-muted-foreground mb-1 block">Panel Size</label>
+                            <Controller
+                              control={form.control}
+                              name={`panelSpecs.${index}.panelSize`}
+                              render={({ field }) => (
+                                <Input className="h-8" {...field} />
+                              )}
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs text-muted-foreground mb-1 block">Frame Size</label>
+                            <Controller
+                              control={form.control}
+                              name={`panelSpecs.${index}.frameSize`}
+                              render={({ field }) => (
+                                <Input className="h-8" {...field} />
+                              )}
+                            />
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <label className="text-xs text-muted-foreground mb-1 block">Panel Size</label>
-                        <Controller
-                          control={form.control}
-                          name={`panelSpecs.${index}.panelSize`}
-                          render={({ field }) => (
-                            <Input className="h-8" {...field} />
-                          )}
-                        />
-                      </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               )}
             </CardContent>
@@ -527,7 +622,26 @@ export default function QuotationForm() {
                 <Plus className="w-4 h-4 mr-1" /> Add Row
               </Button>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
+              <div>
+                <div className="text-sm font-medium mb-2">Select from Tech Spec Master</div>
+                {!techSpecItems?.length ? (
+                  <p className="text-sm text-muted-foreground">No tech spec items yet — add some in Tech Spec Master first.</p>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 max-h-64 overflow-y-auto border rounded-md p-3">
+                    {techSpecItems.map((item) => {
+                      const checked = selectedTechSpecNames.has(item.itemName.trim().toLowerCase())
+                      return (
+                        <label key={item.id} className="flex items-start gap-2 text-sm cursor-pointer">
+                          <Checkbox checked={checked} onCheckedChange={() => toggleTechSpecItem(item)} className="mt-0.5" />
+                          <span>{item.itemName}</span>
+                        </label>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+
               {techSpecFields.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No technical specification rows yet.</p>
               ) : (

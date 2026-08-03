@@ -309,12 +309,20 @@ export default function QuotationDetail() {
                     const matchedItem = quotation.items.find((i) => i.description === spec.panelName)
                     return (
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "12px" }}>
-                        {spec.panelSize ? (
-                          <div>
-                            <span style={{ color: C.label }}>Panel Size </span>
-                            <strong>{spec.panelSize}</strong>
-                          </div>
-                        ) : <div />}
+                        <div style={{ display: "flex", gap: "20px" }}>
+                          {spec.panelSize && (
+                            <div>
+                              <span style={{ color: C.label }}>Panel Size </span>
+                              <strong>{spec.panelSize}</strong>
+                            </div>
+                          )}
+                          {spec.frameSize && (
+                            <div>
+                              <span style={{ color: C.label }}>Frame Size </span>
+                              <strong>{spec.frameSize}</strong>
+                            </div>
+                          )}
+                        </div>
                         {matchedItem && (
                           <div style={{ display: "flex", gap: "20px" }}>
                             <div><span style={{ color: C.label }}>Qty </span><strong>{matchedItem.qty ?? "—"}</strong></div>
@@ -332,10 +340,73 @@ export default function QuotationDetail() {
 
 
 
-          {/* ══ 5. FOOTER: Terms left | Totals right ══ */}
-          <div style={{ display: "flex", gap: "16px", padding: "16px 32px", alignItems: "flex-start" }}>
-            {/* Left: Terms */}
-            <div style={{ flex: 1, border: `1px solid ${C.accentBorder}`, borderRadius: "4px", overflow: "hidden", fontSize: "12px" }}>
+          {/* ══ 5. TOTAL PRICE LIST ══ */}
+          <div style={{ padding: "16px 32px", borderBottom: `1px solid ${C.border}` }}>
+            <div style={{ fontWeight: 700, fontSize: "13px", color: C.accent, marginBottom: "8px" }}>
+              Total Price List
+            </div>
+            <table style={{ width: "100%", borderCollapse: "collapse", border: `1px solid ${C.accentBorder}` }}>
+              <colgroup>
+                <col style={{ width: "10%" }} />
+                <col style={{ width: "60%" }} />
+                <col style={{ width: "30%" }} />
+              </colgroup>
+              <thead>
+                <tr style={{ backgroundColor: C.header, color: C.headerText }}>
+                  <th style={{ padding: "8px 8px", textAlign: "center", fontWeight: 600, fontSize: "12px" }}>S.No</th>
+                  <th style={{ padding: "8px 8px", textAlign: "left", fontWeight: 600, fontSize: "12px" }}>Description</th>
+                  <th style={{ padding: "8px 8px", textAlign: "right", fontWeight: 600, fontSize: "12px" }}>Price</th>
+                </tr>
+              </thead>
+              <tbody>
+                {quotation.items.map((item, i) => (
+                  <tr key={item.id} style={{ borderTop: `1px solid ${C.softBorder}` }}>
+                    <td style={{ padding: "7px 8px", textAlign: "center", fontSize: "12px", color: C.label }}>{i + 1}</td>
+                    <td style={{ padding: "7px 8px", fontSize: "12px" }}>{item.description}</td>
+                    <td style={{ padding: "7px 8px", textAlign: "right", fontSize: "12px", fontFamily: "monospace" }}>{fmt(item.amount)}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr style={{ borderTop: `1px solid ${C.accentBorder}` }}>
+                  <td colSpan={2} style={{ padding: "8px 8px", textAlign: "right", fontSize: "12px", fontWeight: 600, color: C.label }}>Total</td>
+                  <td style={{ padding: "8px 8px", textAlign: "right", fontSize: "12px", fontWeight: 600, fontFamily: "monospace" }}>{fmt(quotation.subtotal)}</td>
+                </tr>
+                {quotation.discountPct > 0 && (
+                  <tr style={{ borderTop: `1px solid ${C.softBorder}` }}>
+                    <td colSpan={2} style={{ padding: "8px 8px", textAlign: "right", fontSize: "12px", fontWeight: 600, color: C.accent }}>Discount ({quotation.discountPct}%)</td>
+                    <td style={{ padding: "8px 8px", textAlign: "right", fontSize: "12px", fontWeight: 600, fontFamily: "monospace", color: C.accent }}>- {fmt(quotation.discountAmount)}</td>
+                  </tr>
+                )}
+                {quotation.discountPct > 0 && (
+                  <tr style={{ borderTop: `1px solid ${C.softBorder}` }}>
+                    <td colSpan={2} style={{ padding: "8px 8px", textAlign: "right", fontSize: "12px", fontWeight: 600, color: C.label }}>After Discount</td>
+                    <td style={{ padding: "8px 8px", textAlign: "right", fontSize: "12px", fontWeight: 600, fontFamily: "monospace" }}>{fmt(quotation.afterDiscountTotal)}</td>
+                  </tr>
+                )}
+                <tr style={{ borderTop: `1px solid ${C.softBorder}` }}>
+                  <td colSpan={2} style={{ padding: "8px 8px", textAlign: "right", fontSize: "12px", fontWeight: 600, color: C.label }}>GST @ {quotation.gstRate}%</td>
+                  <td style={{ padding: "8px 8px", textAlign: "right", fontSize: "12px", fontWeight: 600, fontFamily: "monospace" }}>{fmt(quotation.gstAmount)}</td>
+                </tr>
+                <tr style={{ borderTop: `1px solid ${C.softBorder}` }}>
+                  <td colSpan={2} style={{ padding: "8px 8px", textAlign: "right", fontSize: "12px", fontWeight: 600, color: C.label }}>Round Off</td>
+                  <td style={{ padding: "8px 8px", textAlign: "right", fontSize: "12px", fontWeight: 600, fontFamily: "monospace" }}>{quotation.roundOff >= 0 ? "+" : ""}{quotation.roundOff.toFixed(2)}</td>
+                </tr>
+                <tr style={{ borderTop: `1px solid ${C.accentBorder}`, backgroundColor: C.accent }}>
+                  <td colSpan={2} style={{ padding: "10px 8px", textAlign: "right", fontSize: "13px", fontWeight: 700, color: "#fff" }}>Grand Total</td>
+                  <td style={{ padding: "10px 8px", textAlign: "right", fontSize: "14px", fontWeight: 700, fontFamily: "monospace", color: "#fff" }}>{fmt(quotation.grandTotal)}</td>
+                </tr>
+              </tfoot>
+            </table>
+            <div style={{ marginTop: "8px", fontSize: "11px" }}>
+              <span style={{ color: C.label }}>Grand Total (in words): </span>
+              <span style={{ fontWeight: 600 }}>{quotation.amountInWords}</span>
+            </div>
+          </div>
+
+          {/* ══ 6. FOOTER: Terms and Conditions ══ */}
+          <div style={{ padding: "16px 32px" }}>
+            <div style={{ border: `1px solid ${C.accentBorder}`, borderRadius: "4px", overflow: "hidden", fontSize: "12px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "9px 14px", fontWeight: 800, fontSize: "13px", color: C.label, textTransform: "uppercase", letterSpacing: "0.5px", backgroundColor: C.accentLight, borderBottom: `1px solid ${C.softBorder}` }}>
                 <ClipboardList size={16} /> Terms and Conditions
               </div>
@@ -362,44 +433,6 @@ export default function QuotationDetail() {
                   <div style={{ color: C.label, lineHeight: 1.6 }}>{quotation.notes}</div>
                 </div>
               )}
-              </div>
-            </div>
-
-            {/* Right: Totals */}
-            <div style={{ width: "260px", flexShrink: 0, border: `1px solid ${C.accentBorder}`, borderRadius: "4px", overflow: "hidden" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 16px", borderBottom: `1px solid ${C.softBorder}` }}>
-                <span style={{ color: C.label, fontSize: "12px" }}>Sub Total</span>
-                <span style={{ fontWeight: 600 }}>{fmt(quotation.subtotal)}</span>
-              </div>
-              {quotation.discountPct > 0 && (
-                <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 16px", borderBottom: `1px solid ${C.softBorder}` }}>
-                  <span style={{ color: C.accent, fontSize: "12px", fontWeight: 600 }}>Discount ({quotation.discountPct}%)</span>
-                  <span style={{ fontWeight: 600, color: C.accent }}>- {fmt(quotation.discountAmount)}</span>
-                </div>
-              )}
-              {quotation.discountPct > 0 && (
-                <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 16px", borderBottom: `1px solid ${C.softBorder}` }}>
-                  <span style={{ color: C.label, fontSize: "12px" }}>After Discount</span>
-                  <span style={{ fontWeight: 600 }}>{fmt(quotation.afterDiscountTotal)}</span>
-                </div>
-              )}
-              <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 16px", borderBottom: `1px solid ${C.softBorder}` }}>
-                <span style={{ color: C.label, fontSize: "12px" }}>GST @ {quotation.gstRate}%</span>
-                <span style={{ fontWeight: 600 }}>{fmt(quotation.gstAmount)}</span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 16px", borderBottom: `1px solid ${C.softBorder}` }}>
-                <span style={{ color: C.label, fontSize: "12px" }}>Round Off</span>
-                <span style={{ fontWeight: 600 }}>{quotation.roundOff >= 0 ? "+" : ""}{quotation.roundOff.toFixed(2)}</span>
-              </div>
-              {/* Total */}
-              <div style={{ display: "flex", justifyContent: "space-between", padding: "14px 16px", backgroundColor: C.accent }}>
-                <span style={{ fontWeight: 700, color: "#fff", fontSize: "14px" }}>Total</span>
-                <span style={{ fontWeight: 700, color: "#fff", fontSize: "16px" }}>{fmt(quotation.grandTotal)}</span>
-              </div>
-              {/* Amount in words */}
-              <div style={{ padding: "12px 16px", fontSize: "11px" }}>
-                <div style={{ color: C.label, marginBottom: "4px" }}>Invoice Total (in words)</div>
-                <div style={{ fontWeight: 600, fontSize: "12px", lineHeight: 1.5 }}>{quotation.amountInWords}</div>
               </div>
             </div>
           </div>

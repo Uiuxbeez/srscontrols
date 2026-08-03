@@ -10,6 +10,7 @@ import {
   ListInvoicesQueryParams,
 } from "@workspace/api-zod";
 import { computeInvoiceTotals } from "../lib/amountInWords";
+import { SESSION_COOKIE, signSession } from "../middlewares/require-auth";
 
 const router: IRouter = Router();
 
@@ -35,6 +36,16 @@ router.get("/invoices/:id/pdf", async (req, res): Promise<void> => {
 
     const browser = await puppeteer.launch({ args: ["--no-sandbox", "--disable-setuid-sandbox"] })
     const page = await browser.newPage()
+    // The headless browser has no session of its own — forward the caller's
+    // identity (this route is already behind requireAuth) so the rendered
+    // page's own API calls don't get bounced to the login screen.
+    if (req.user) {
+      await page.setCookie({
+        name: SESSION_COOKIE,
+        value: signSession(req.user),
+        url: FRONTEND_BASE,
+      })
+    }
     await page.goto(target, { waitUntil: "networkidle0" })
     const pdfBuffer = await page.pdf({ format: "A4", printBackground: true })
     await browser.close()

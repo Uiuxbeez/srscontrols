@@ -120,7 +120,7 @@ export default function Dashboard() {
                   <TableRow key={inv.id}>
                     <TableCell className="font-medium">
                       <Link href={`/invoices/${inv.id}`} className="hover:underline text-primary">
-                        INV-{inv.invoiceNo.toString().padStart(4, '0')}
+                        INV-{inv.invoiceNo}
                       </Link>
                     </TableCell>
                     <TableCell>{formatDate(inv.date)}</TableCell>

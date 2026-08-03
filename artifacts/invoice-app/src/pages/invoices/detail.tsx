@@ -140,7 +140,7 @@ export default function InvoiceDetail() {
             <Link href="/invoices"><ArrowLeft className="h-4 w-4" /></Link>
           </Button>
           <h1 className="text-2xl font-bold tracking-tight">
-            Invoice INV-{invoice.invoiceNo.toString().padStart(4, "0")}
+            Invoice INV-{invoice.invoiceNo}
           </h1>
         </div>
         <div className="flex items-center gap-2">
@@ -286,7 +286,7 @@ export default function InvoiceDetail() {
                 <div>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", border: `1px solid ${COL.border}`, borderRadius: "4px 4px 0 0", overflow: "hidden", backgroundColor: "#fff" }}>
                     {[
-                      ["Invoice No.", `INV-${invoice.invoiceNo.toString().padStart(4, "0")}`],
+                      ["Invoice No.", `INV-${invoice.invoiceNo}`],
                       ["Delivery Note", invoice.deliveryNote || "-"],
                       ["Invoice Date", formatDate(invoice.date)],
                       ["Despatch Doc. No.", invoice.despatchDocNo || "-"],

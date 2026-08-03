@@ -49,32 +49,72 @@ export interface ClientUpdate {
   email?: string;
 }
 
+export type PanelCategory = typeof PanelCategory[keyof typeof PanelCategory];
+
+
+export const PanelCategory = {
+  Manufacturing: 'Manufacturing',
+  Licensing: 'Licensing',
+  Erection: 'Erection',
+  Trading: 'Trading',
+} as const;
+
 export interface Panel {
   id: number;
   name: string;
+  category: PanelCategory;
   breakdownText: string;
+  /** Internal-only JSON array of per-component prices, aligned by index to breakdownText's lines. Never surfaced on printed quotations. */
+  componentPricing?: string;
   panelSize: string;
+  frameSize?: string;
   price: number;
   defaultQty: number;
   createdAt?: string;
 }
 
+export type PanelInputCategory = typeof PanelInputCategory[keyof typeof PanelInputCategory];
+
+
+export const PanelInputCategory = {
+  Manufacturing: 'Manufacturing',
+  Licensing: 'Licensing',
+  Erection: 'Erection',
+  Trading: 'Trading',
+} as const;
+
 export interface PanelInput {
   /** @minLength 1 */
   name: string;
+  category: PanelInputCategory;
   breakdownText?: string;
+  componentPricing?: string;
   panelSize?: string;
+  frameSize?: string;
   /** @minimum 0 */
   price?: number;
   /** @minimum 1 */
   defaultQty?: number;
 }
 
+export type PanelUpdateCategory = typeof PanelUpdateCategory[keyof typeof PanelUpdateCategory];
+
+
+export const PanelUpdateCategory = {
+  Manufacturing: 'Manufacturing',
+  Licensing: 'Licensing',
+  Erection: 'Erection',
+  Trading: 'Trading',
+} as const;
+
 export interface PanelUpdate {
   /** @minLength 1 */
   name?: string;
+  category?: PanelUpdateCategory;
   breakdownText?: string;
+  componentPricing?: string;
   panelSize?: string;
+  frameSize?: string;
   /** @minimum 0 */
   price?: number;
   /** @minimum 1 */

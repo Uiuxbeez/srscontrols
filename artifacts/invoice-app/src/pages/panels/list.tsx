@@ -1,9 +1,11 @@
+import { useMemo, useState } from "react"
 import { useListPanels, useDeletePanel, getListPanelsQueryKey } from "@workspace/api-client-react"
 import { useQueryClient } from "@tanstack/react-query"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Plus, Edit, Trash2 } from "lucide-react"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Plus, Edit, Trash2, Upload } from "lucide-react"
 import { Link } from "wouter"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/hooks/use-toast"
@@ -19,6 +21,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
+const PANEL_CATEGORIES = ["Manufacturing", "Licensing", "Erection", "Trading"] as const
+
 function fmt(n: number) {
   return `₹${n.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`
 }
@@ -28,6 +32,12 @@ export default function PanelsList() {
   const deletePanel = useDeletePanel()
   const { toast } = useToast()
   const queryClient = useQueryClient()
+  const [categoryFilter, setCategoryFilter] = useState<string>("All")
+
+  const filteredPanels = useMemo(
+    () => (categoryFilter === "All" ? panels ?? [] : (panels ?? []).filter((p) => p.category === categoryFilter)),
+    [panels, categoryFilter],
+  )
 
   const handleDelete = (id: number) => {
     deletePanel.mutate({ id }, {
@@ -48,10 +58,24 @@ export default function PanelsList() {
           <h1 className="text-2xl font-bold tracking-tight">Panel Master</h1>
           <p className="text-muted-foreground">Manage reusable panel products (breakdown, size, price) for quotations.</p>
         </div>
-        <Link href="/panels/new" className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2">
-          <Plus className="mr-2 w-4 h-4" /> Add Panel
-        </Link>
+        <div className="flex gap-2">
+          <Link href="/panels/bulk-upload" className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2">
+            <Upload className="mr-2 w-4 h-4" /> Bulk Upload
+          </Link>
+          <Link href="/panels/new" className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2">
+            <Plus className="mr-2 w-4 h-4" /> Add Panel
+          </Link>
+        </div>
       </div>
+
+      <Tabs value={categoryFilter} onValueChange={setCategoryFilter}>
+        <TabsList>
+          <TabsTrigger value="All">All</TabsTrigger>
+          {PANEL_CATEGORIES.map((cat) => (
+            <TabsTrigger key={cat} value={cat}>{cat}</TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
 
       <Card>
         <CardContent className="p-0">
@@ -61,15 +85,16 @@ export default function PanelsList() {
               <Skeleton className="h-10 w-full" />
               <Skeleton className="h-10 w-full" />
             </div>
-          ) : !panels?.length ? (
+          ) : !filteredPanels.length ? (
             <div className="text-center py-12 text-muted-foreground">
-              No panels found. Add one to get started.
+              {panels?.length ? "No panels in this category." : "No panels found. Add one to get started."}
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
+                  <TableHead>Category</TableHead>
                   <TableHead>Panel Size</TableHead>
                   <TableHead className="text-right">Price</TableHead>
                   <TableHead className="text-right">Default Qty</TableHead>
@@ -77,9 +102,14 @@ export default function PanelsList() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {panels.map((panel) => (
+                {filteredPanels.map((panel) => (
                   <TableRow key={panel.id}>
                     <TableCell className="font-medium">{panel.name}</TableCell>
+                    <TableCell>
+                      <span className="inline-flex items-center rounded-full bg-primary/10 text-primary px-2 py-0.5 text-xs font-medium">
+                        {panel.category}
+                      </span>
+                    </TableCell>
                     <TableCell>{panel.panelSize || <span className="text-muted-foreground text-xs italic">Not set</span>}</TableCell>
                     <TableCell className="text-right font-mono">{fmt(panel.price)}</TableCell>
                     <TableCell className="text-right">{panel.defaultQty}</TableCell>

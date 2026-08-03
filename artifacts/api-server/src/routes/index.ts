@@ -1,5 +1,6 @@
 import { Router, type IRouter } from "express";
 import healthRouter from "./health";
+import authRouter from "./auth";
 import clientsRouter from "./clients";
 import invoicesRouter from "./invoices";
 import quotationsRouter from "./quotations";
@@ -9,10 +10,17 @@ import categoriesRouter from "./categories";
 import subCategoriesRouter from "./sub-categories";
 import itemsRouter from "./items";
 import itemMasterImportRouter from "./item-master-import";
+import { requireAuth } from "../middlewares/require-auth";
 
 const router: IRouter = Router();
 
+// Public — no session required
 router.use(healthRouter);
+router.use(authRouter);
+
+// Everything below requires a valid session
+router.use(requireAuth);
+
 router.use(clientsRouter);
 router.use(invoicesRouter);
 router.use(quotationsRouter);

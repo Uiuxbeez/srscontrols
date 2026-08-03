@@ -5,12 +5,16 @@
  * SRS Invoice Manager API
  * OpenAPI spec version: 0.1.0
  */
+import type { PanelUpdateCategory } from './panelUpdateCategory';
 
 export interface PanelUpdate {
   /** @minLength 1 */
   name?: string;
+  category?: PanelUpdateCategory;
   breakdownText?: string;
+  componentPricing?: string;
   panelSize?: string;
+  frameSize?: string;
   /** @minimum 0 */
   price?: number;
   /** @minimum 1 */

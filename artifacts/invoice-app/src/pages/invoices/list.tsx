@@ -109,7 +109,7 @@ export default function InvoicesList() {
                   <TableRow key={inv.id}>
                     <TableCell className="font-medium">
                       <Link href={`/invoices/${inv.id}`} className="hover:underline text-primary flex items-center gap-1">
-                        INV-{inv.invoiceNo.toString().padStart(4, '0')}
+                        INV-{inv.invoiceNo}
                         <ExternalLink className="h-3 w-3" />
                       </Link>
                     </TableCell>
@@ -133,7 +133,7 @@ export default function InvoicesList() {
                             <AlertDialogHeader>
                               <AlertDialogTitle>Delete Invoice?</AlertDialogTitle>
                               <AlertDialogDescription>
-                                This will permanently delete invoice INV-{inv.invoiceNo.toString().padStart(4, '0')}. This action cannot be undone.
+                                This will permanently delete invoice INV-{inv.invoiceNo}. This action cannot be undone.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
