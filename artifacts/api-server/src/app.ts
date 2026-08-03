@@ -26,7 +26,9 @@ app.use(
     },
   }),
 );
-app.use(cors());
+// Credentialed cross-origin requests (e.g. a separately hosted static frontend) need an
+// explicit origin — "*" is rejected by browsers whenever cookies are involved.
+app.use(cors({ origin: process.env.FRONTEND_BASE_URL || true, credentials: true }));
 app.use(cookieParser());
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true }));

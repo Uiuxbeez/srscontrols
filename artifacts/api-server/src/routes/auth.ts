@@ -10,7 +10,11 @@ const isProd = process.env.NODE_ENV === "production";
 
 const cookieOptions = {
   httpOnly: true,
-  sameSite: "lax" as const,
+  // "none" is required for a cross-site frontend (e.g. Cloudflare Pages) calling a
+  // separately hosted API (e.g. Railway) to receive the cookie at all; browsers
+  // silently drop "lax"/"strict" cookies on cross-site requests. "none" requires
+  // secure:true, which is already the case in production.
+  sameSite: isProd ? ("none" as const) : ("lax" as const),
   secure: isProd,
   maxAge: 7 * 24 * 60 * 60 * 1000,
 };
@@ -41,7 +45,7 @@ router.post("/auth/login", async (req, res): Promise<void> => {
 
 // POST /auth/logout
 router.post("/auth/logout", (_req, res): void => {
-  res.clearCookie(SESSION_COOKIE);
+  res.clearCookie(SESSION_COOKIE, { httpOnly: cookieOptions.httpOnly, sameSite: cookieOptions.sameSite, secure: cookieOptions.secure });
   res.json({ success: true });
 });
 
