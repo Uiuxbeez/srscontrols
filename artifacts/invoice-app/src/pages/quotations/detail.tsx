@@ -243,7 +243,7 @@ export default function QuotationDetail() {
           {quotation.subject && (
             <div style={{ padding: "10px 32px", borderBottom: `1px solid ${C.border}`, fontSize: "12px" }}>
               <span style={{ color: C.label }}>Sub: </span>
-              <span style={{ fontWeight: 600 }}>Quotation for supply of {quotation.subject} as Following</span>
+              <span style={{ fontWeight: 600 }}>{quotation.subject}</span>
             </div>
           )}
 
