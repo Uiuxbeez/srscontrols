@@ -8,6 +8,7 @@ import { formatDate } from "@/lib/utils"
 import { ArrowLeft, Edit, Landmark, Mail, MapPin, Phone, Printer, ReceiptText, Trash2, UserRound } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { QRCodeSVG } from "qrcode.react"
+import { isInterState } from "@/lib/gst"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -130,6 +131,9 @@ export default function InvoiceDetail() {
 
   const fillerRows = Math.max(0, 1 - invoice.items.length)
   const totalQty = invoice.items.reduce((sum, i) => sum + (i.qty ?? 0), 0)
+  const interState = isInterState(invoice.client.gstin)
+  const igstRate = invoice.cgstRate + invoice.sgstRate
+  const igstAmount = invoice.cgstAmount + invoice.sgstAmount
 
   return (
     <div className="space-y-6">
@@ -400,14 +404,23 @@ export default function InvoiceDetail() {
                 <span style={{ fontSize: "12px" }}>Sub Total</span>
                 <span style={{ fontWeight: 700 }}>₹ {formatAmount(invoice.subtotal)}</span>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", padding: "3px 7px", borderBottom: `1px solid ${COL.softBorder}` }}>
-                <span style={{ fontSize: "12px" }}>Output CGST Taxes</span>
-                <span style={{ fontWeight: 700 }}>₹ {formatAmount(invoice.cgstAmount)}</span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", padding: "3px 7px", borderBottom: `1px solid ${COL.softBorder}` }}>
-                <span style={{ fontSize: "12px" }}>Output SGST Taxes</span>
-                <span style={{ fontWeight: 700 }}>₹ {formatAmount(invoice.sgstAmount)}</span>
-              </div>
+              {interState ? (
+                <div style={{ display: "flex", justifyContent: "space-between", padding: "3px 7px", borderBottom: `1px solid ${COL.softBorder}` }}>
+                  <span style={{ fontSize: "12px" }}>Output IGST Taxes</span>
+                  <span style={{ fontWeight: 700 }}>₹ {formatAmount(igstAmount)}</span>
+                </div>
+              ) : (
+                <>
+                  <div style={{ display: "flex", justifyContent: "space-between", padding: "3px 7px", borderBottom: `1px solid ${COL.softBorder}` }}>
+                    <span style={{ fontSize: "12px" }}>Output CGST Taxes</span>
+                    <span style={{ fontWeight: 700 }}>₹ {formatAmount(invoice.cgstAmount)}</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", padding: "3px 7px", borderBottom: `1px solid ${COL.softBorder}` }}>
+                    <span style={{ fontSize: "12px" }}>Output SGST Taxes</span>
+                    <span style={{ fontWeight: 700 }}>₹ {formatAmount(invoice.sgstAmount)}</span>
+                  </div>
+                </>
+              )}
               <div style={{ display: "flex", justifyContent: "space-between", padding: "3px 7px", borderBottom: `1px solid ${COL.softBorder}` }}>
                 <span style={{ fontSize: "12px" }}>Round Off</span>
                 <span style={{ fontWeight: 700 }}>₹ {formatAmount(invoice.roundOff)}</span>
@@ -427,7 +440,10 @@ export default function InvoiceDetail() {
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
               <thead>
                 <tr style={{ backgroundColor: "#f3f4f6", borderTop: `1px solid ${COL.border}`, borderBottom: `1px solid ${COL.border}` }}>
-                  {["HSN/SAC", "Taxable Value", "CGST %", "CGST Amt", "SGST %", "SGST Amt", "Total Tax"].map((h, i) => (
+                  {(interState
+                    ? ["HSN/SAC", "Taxable Value", "IGST %", "IGST Amt", "Total Tax"]
+                    : ["HSN/SAC", "Taxable Value", "CGST %", "CGST Amt", "SGST %", "SGST Amt", "Total Tax"]
+                  ).map((h, i) => (
                     <th key={h} style={{ padding: "7px 14px", textAlign: i === 0 ? "left" : "right", fontWeight: 600, color: COL.label }}>
                       {h}
                     </th>
@@ -439,10 +455,19 @@ export default function InvoiceDetail() {
                   <tr key={hsn} style={{ borderBottom: `1px solid ${COL.border}` }}>
                     <td style={{ padding: "7px 14px" }}>{hsn}</td>
                     <td style={{ padding: "7px 14px", textAlign: "right" }}>{taxable.toFixed(2)}</td>
-                    <td style={{ padding: "7px 14px", textAlign: "right" }}>{invoice.cgstRate}%</td>
-                    <td style={{ padding: "7px 14px", textAlign: "right" }}>{((taxable * invoice.cgstRate) / 100).toFixed(2)}</td>
-                    <td style={{ padding: "7px 14px", textAlign: "right" }}>{invoice.sgstRate}%</td>
-                    <td style={{ padding: "7px 14px", textAlign: "right" }}>{((taxable * invoice.sgstRate) / 100).toFixed(2)}</td>
+                    {interState ? (
+                      <td style={{ padding: "7px 14px", textAlign: "right" }}>{igstRate}%</td>
+                    ) : (
+                      <>
+                        <td style={{ padding: "7px 14px", textAlign: "right" }}>{invoice.cgstRate}%</td>
+                        <td style={{ padding: "7px 14px", textAlign: "right" }}>{((taxable * invoice.cgstRate) / 100).toFixed(2)}</td>
+                        <td style={{ padding: "7px 14px", textAlign: "right" }}>{invoice.sgstRate}%</td>
+                        <td style={{ padding: "7px 14px", textAlign: "right" }}>{((taxable * invoice.sgstRate) / 100).toFixed(2)}</td>
+                      </>
+                    )}
+                    {interState && (
+                      <td style={{ padding: "7px 14px", textAlign: "right" }}>{((taxable * igstRate) / 100).toFixed(2)}</td>
+                    )}
                     <td style={{ padding: "7px 14px", textAlign: "right", fontWeight: 600 }}>
                       {((taxable * (invoice.cgstRate + invoice.sgstRate)) / 100).toFixed(2)}
                     </td>
@@ -451,10 +476,19 @@ export default function InvoiceDetail() {
                 <tr style={{ backgroundColor: "#f3f4f6", fontWeight: 700, borderTop: `1px solid ${COL.border}` }}>
                   <td style={{ padding: "7px 14px" }}>Total</td>
                   <td style={{ padding: "7px 14px", textAlign: "right" }}>{invoice.subtotal.toFixed(2)}</td>
-                  <td style={{ padding: "7px 14px", textAlign: "right" }} />
-                  <td style={{ padding: "7px 14px", textAlign: "right" }}>{invoice.cgstAmount.toFixed(2)}</td>
-                  <td style={{ padding: "7px 14px", textAlign: "right" }} />
-                  <td style={{ padding: "7px 14px", textAlign: "right" }}>{invoice.sgstAmount.toFixed(2)}</td>
+                  {interState ? (
+                    <>
+                      <td style={{ padding: "7px 14px", textAlign: "right" }} />
+                      <td style={{ padding: "7px 14px", textAlign: "right" }}>{igstAmount.toFixed(2)}</td>
+                    </>
+                  ) : (
+                    <>
+                      <td style={{ padding: "7px 14px", textAlign: "right" }} />
+                      <td style={{ padding: "7px 14px", textAlign: "right" }}>{invoice.cgstAmount.toFixed(2)}</td>
+                      <td style={{ padding: "7px 14px", textAlign: "right" }} />
+                      <td style={{ padding: "7px 14px", textAlign: "right" }}>{invoice.sgstAmount.toFixed(2)}</td>
+                    </>
+                  )}
                   <td style={{ padding: "7px 14px", textAlign: "right" }}>{(invoice.cgstAmount + invoice.sgstAmount).toFixed(2)}</td>
                 </tr>
               </tbody>

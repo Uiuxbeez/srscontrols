@@ -28,6 +28,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast"
 import { ArrowLeft, Save, Plus, Trash2 } from "lucide-react"
 import { Link } from "wouter"
+import { isInterState } from "@/lib/gst"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatCurrency } from "@/lib/utils"
 
@@ -118,6 +119,14 @@ export default function InvoiceForm() {
   const watchItems = useWatch({ control: form.control, name: "items" })
   const watchCgstRate = useWatch({ control: form.control, name: "cgstRate" }) || 0
   const watchSgstRate = useWatch({ control: form.control, name: "sgstRate" }) || 0
+  const watchClientId = useWatch({ control: form.control, name: "clientId" })
+
+  // GST law: CGST+SGST for intra-state, IGST for inter-state — determined by the client's
+  // GSTIN state-code prefix vs. SRS Controls' own. The underlying cgstRate/sgstRate fields
+  // still store the split (kept in sync so subtotal math never changes); only the label and
+  // input grouping shown to the user switches.
+  const selectedClient = clients?.find((c) => c.id === watchClientId)
+  const interState = isInterState(selectedClient?.gstin)
 
   // Auto-calculate item amounts if qty & rate are present
   useEffect(() => {
@@ -417,22 +426,43 @@ export default function InvoiceForm() {
                     <span className="font-mono">{formatCurrency(totals.subtotal)}</span>
                   </div>
                   
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                      <span>CGST Rate (%):</span>
-                      <Input type="number" className="w-16 h-7 px-1 text-right" {...form.register("cgstRate")} />
+                  {interState ? (
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        <span>IGST Rate (%):</span>
+                        <Input
+                          type="number"
+                          className="w-16 h-7 px-1 text-right"
+                          value={watchCgstRate + watchSgstRate}
+                          onChange={(e) => {
+                            const total = Number(e.target.value) || 0
+                            form.setValue("cgstRate", total / 2)
+                            form.setValue("sgstRate", total / 2)
+                          }}
+                        />
+                      </div>
+                      <span className="font-mono">{formatCurrency(totals.cgstAmount + totals.sgstAmount)}</span>
                     </div>
-                    <span className="font-mono">{formatCurrency(totals.cgstAmount)}</span>
-                  </div>
-                  
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                      <span>SGST Rate (%):</span>
-                      <Input type="number" className="w-16 h-7 px-1 text-right" {...form.register("sgstRate")} />
-                    </div>
-                    <span className="font-mono">{formatCurrency(totals.sgstAmount)}</span>
-                  </div>
-                  
+                  ) : (
+                    <>
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                          <span>CGST Rate (%):</span>
+                          <Input type="number" className="w-16 h-7 px-1 text-right" {...form.register("cgstRate")} />
+                        </div>
+                        <span className="font-mono">{formatCurrency(totals.cgstAmount)}</span>
+                      </div>
+
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                          <span>SGST Rate (%):</span>
+                          <Input type="number" className="w-16 h-7 px-1 text-right" {...form.register("sgstRate")} />
+                        </div>
+                        <span className="font-mono">{formatCurrency(totals.sgstAmount)}</span>
+                      </div>
+                    </>
+                  )}
+
                   <div className="flex justify-between text-muted-foreground border-t pt-2">
                     <span>Round off:</span>
                     <span className="font-mono">{totals.roundOff.toFixed(2)}</span>
