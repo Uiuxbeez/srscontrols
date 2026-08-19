@@ -217,7 +217,7 @@ export default function QuotationDetail() {
                   <span style={{ color: C.label }}>GSTIN </span><strong>33AYQPK214491ZZ</strong>
                 </div>
                 <div>
-                  <span style={{ color: C.label }}>PAN </span><strong>AKQPS9506E</strong>
+                  <span style={{ color: C.label }}>PAN </span><strong>AYQPK2144P</strong>
                 </div>
               </div>
             </div>
