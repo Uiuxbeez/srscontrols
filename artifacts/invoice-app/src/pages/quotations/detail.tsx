@@ -214,7 +214,7 @@ export default function QuotationDetail() {
                 <div style={{ color: C.label }}>Manufacturers of: Electric Control Panels, 100/2, Kurudampalayam Village, K.Vadamadurai,</div>
                 <div style={{ color: C.label }}>Thudiyalur, Coimbatore – 641017</div>
                 <div style={{ marginTop: "6px" }}>
-                  <span style={{ color: C.label }}>GSTIN </span><strong>33AYQPK214491ZZ</strong>
+                  <span style={{ color: C.label }}>GSTIN </span><strong>33AYQPK2144P1ZZ</strong>
                 </div>
                 <div>
                   <span style={{ color: C.label }}>PAN </span><strong>AYQPK2144P</strong>

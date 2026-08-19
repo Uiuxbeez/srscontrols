@@ -120,7 +120,7 @@ export default function QuotationForm() {
       gstRate: 18,
       ...DEFAULT_TERMS,
       notes: "",
-      items: [{ sNo: 1, description: "", qty: 1, rate: 0, amount: 0 }],
+      items: [],
       panelSpecs: [],
       techSpecs: [],
     },
@@ -409,105 +409,6 @@ export default function QuotationForm() {
             </CardContent>
           </Card>
 
-          {/* Line Items */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle>Items</CardTitle>
-              <Button type="button" variant="outline" size="sm"
-                onClick={() => append({ sNo: fields.length + 1, description: "", qty: 1, rate: 0, amount: 0 })}>
-                <Plus className="w-4 h-4 mr-1" /> Add Row
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="text-xs text-muted-foreground bg-muted/50 border-y">
-                    <tr>
-                      <th className="p-2 w-12 text-center">S.No</th>
-                      <th className="p-2">Description</th>
-                      <th className="p-2 w-28">Qty</th>
-                      <th className="p-2 w-36">Rate (₹)</th>
-                      <th className="p-2 w-36 text-right">Amount (₹)</th>
-                      <th className="p-2 w-10" />
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {fields.map((field, index) => (
-                      <tr key={field.id} className="hover:bg-muted/20">
-                        <td className="p-2 text-center">
-                          <Input type="number" className="h-8 px-1 text-center"
-                            {...form.register(`items.${index}.sNo`, { valueAsNumber: true })} />
-                        </td>
-                        <td className="p-2">
-                          <Textarea className="min-h-[36px] resize-none text-sm"
-                            {...form.register(`items.${index}.description`)} />
-                        </td>
-                        <td className="p-2">
-                          <Input type="number" step="0.001" className="h-8"
-                            {...form.register(`items.${index}.qty`)} />
-                        </td>
-                        <td className="p-2">
-                          <Input type="number" step="0.01" className="h-8"
-                            {...form.register(`items.${index}.rate`)} />
-                        </td>
-                        <td className="p-2">
-                          <Input type="number" step="0.01" className="h-8 text-right font-mono"
-                            {...form.register(`items.${index}.amount`)} />
-                        </td>
-                        <td className="p-2">
-                          <Button type="button" variant="ghost" size="icon"
-                            className="h-8 w-8 text-destructive" onClick={() => remove(index)}>
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Totals */}
-              <div className="mt-6 flex flex-col items-end gap-2 text-sm">
-                <div className="w-full max-w-xs space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Subtotal</span>
-                    <span className="font-mono font-medium">{fmt(totals.subtotal)}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                      <span className="text-muted-foreground">Discount</span>
-                      <Input type="number" className="w-16 h-7 px-1 text-right"
-                        {...form.register("discountPct")} />
-                      <span className="text-muted-foreground">%</span>
-                    </div>
-                    <span className="font-mono text-orange-600">- {fmt(totals.discountAmount)}</span>
-                  </div>
-                  <div className="flex justify-between border-t pt-2">
-                    <span className="font-medium">After Discount</span>
-                    <span className="font-mono font-medium">{fmt(totals.afterDiscount)}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                      <span className="text-muted-foreground">GST</span>
-                      <Input type="number" className="w-16 h-7 px-1 text-right"
-                        {...form.register("gstRate")} />
-                      <span className="text-muted-foreground">%</span>
-                    </div>
-                    <span className="font-mono">{fmt(totals.gstAmount)}</span>
-                  </div>
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>Round off</span>
-                    <span className="font-mono">{totals.roundOff.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between font-bold text-lg border-t border-b py-2">
-                    <span>Grand Total</span>
-                    <span className="font-mono text-primary">{fmt(totals.grandTotal)}</span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Panel Specification */}
           <Card>
             <CardHeader className="pb-2">
@@ -703,6 +604,109 @@ export default function QuotationForm() {
                   </table>
                 </div>
               )}
+            </CardContent>
+          </Card>
+
+          {/* Line Items */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle>Items</CardTitle>
+              <Button type="button" variant="outline" size="sm"
+                onClick={() => append({ sNo: fields.length + 1, description: "", qty: 1, rate: 0, amount: 0 })}>
+                <Plus className="w-4 h-4 mr-1" /> Add Row
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {fields.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No items yet — pick a panel above or add a row manually.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="text-xs text-muted-foreground bg-muted/50 border-y">
+                      <tr>
+                        <th className="p-2 w-12 text-center">S.No</th>
+                        <th className="p-2">Description</th>
+                        <th className="p-2 w-28">Qty</th>
+                        <th className="p-2 w-36">Rate (₹)</th>
+                        <th className="p-2 w-36 text-right">Amount (₹)</th>
+                        <th className="p-2 w-10" />
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {fields.map((field, index) => (
+                        <tr key={field.id} className="hover:bg-muted/20">
+                          <td className="p-2 text-center">
+                            <Input type="number" className="h-8 px-1 text-center"
+                              {...form.register(`items.${index}.sNo`, { valueAsNumber: true })} />
+                          </td>
+                          <td className="p-2">
+                            <Textarea className="min-h-[36px] resize-none text-sm"
+                              {...form.register(`items.${index}.description`)} />
+                          </td>
+                          <td className="p-2">
+                            <Input type="number" step="0.001" className="h-8"
+                              {...form.register(`items.${index}.qty`)} />
+                          </td>
+                          <td className="p-2">
+                            <Input type="number" step="0.01" className="h-8"
+                              {...form.register(`items.${index}.rate`)} />
+                          </td>
+                          <td className="p-2">
+                            <Input type="number" step="0.01" className="h-8 text-right font-mono"
+                              {...form.register(`items.${index}.amount`)} />
+                          </td>
+                          <td className="p-2">
+                            <Button type="button" variant="ghost" size="icon"
+                              className="h-8 w-8 text-destructive" onClick={() => remove(index)}>
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* Totals */}
+              <div className="mt-6 flex flex-col items-end gap-2 text-sm">
+                <div className="w-full max-w-xs space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Subtotal</span>
+                    <span className="font-mono font-medium">{fmt(totals.subtotal)}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground">Discount</span>
+                      <Input type="number" className="w-16 h-7 px-1 text-right"
+                        {...form.register("discountPct")} />
+                      <span className="text-muted-foreground">%</span>
+                    </div>
+                    <span className="font-mono text-orange-600">- {fmt(totals.discountAmount)}</span>
+                  </div>
+                  <div className="flex justify-between border-t pt-2">
+                    <span className="font-medium">After Discount</span>
+                    <span className="font-mono font-medium">{fmt(totals.afterDiscount)}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground">GST</span>
+                      <Input type="number" className="w-16 h-7 px-1 text-right"
+                        {...form.register("gstRate")} />
+                      <span className="text-muted-foreground">%</span>
+                    </div>
+                    <span className="font-mono">{fmt(totals.gstAmount)}</span>
+                  </div>
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Round off</span>
+                    <span className="font-mono">{totals.roundOff.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between font-bold text-lg border-t border-b py-2">
+                    <span>Grand Total</span>
+                    <span className="font-mono text-primary">{fmt(totals.grandTotal)}</span>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
