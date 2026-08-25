@@ -5,8 +5,13 @@
  * SRS Invoice Manager API
  * OpenAPI spec version: 0.1.0
  */
+import type { ListInvoicesDocumentType } from './listInvoicesDocumentType';
 
 export type ListInvoicesParams = {
 clientId?: number;
 search?: string;
+/**
+ * Defaults to "invoice" when omitted.
+ */
+documentType?: ListInvoicesDocumentType;
 };

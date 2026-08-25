@@ -3,7 +3,7 @@ import { useLocation, useParams, Link } from "wouter"
 import { useForm, useFieldArray, useWatch, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { useListClients, useListPanels, useListTechSpecItems } from "@workspace/api-client-react"
+import { useListClients, useListPanels, useListTechSpecItems, useUpdatePanel, getListPanelsQueryKey } from "@workspace/api-client-react"
 import { useQueryClient } from "@tanstack/react-query"
 import {
   useCreateQuotation,
@@ -108,6 +108,7 @@ export default function QuotationForm() {
 
   const create = useCreateQuotation()
   const update = useUpdateQuotation()
+  const updatePanel = useUpdatePanel()
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -215,16 +216,75 @@ export default function QuotationForm() {
     return panel.breakdownText.split("\n").map((l) => l.trim()).filter(Boolean)
   }
 
-  function togglePanelBreakdownLine(specIndex: number, masterLines: string[], line: string) {
+  function togglePanelBreakdownLine(specIndex: number, line: string) {
     const current = (form.getValues(`panelSpecs.${specIndex}.breakdownText`) ?? "")
       .split("\n").map((l) => l.trim()).filter(Boolean)
     const has = current.includes(line)
-    const next = has ? current.filter((l) => l !== line) : [...current, line]
-    // Keep master-list lines in their original order; anything hand-typed that
-    // isn't part of the master list is preserved, appended after.
-    const ordered = masterLines.filter((l) => next.includes(l))
-    const extras = next.filter((l) => !masterLines.includes(l))
-    form.setValue(`panelSpecs.${specIndex}.breakdownText`, [...ordered, ...extras].join("\n"))
+    if (has) {
+      form.setValue(`panelSpecs.${specIndex}.breakdownText`, current.filter((l) => l !== line).join("\n"))
+      return
+    }
+
+    const orderInput = window.prompt(
+      `Which order should this component appear in? Enter 1 to ${current.length + 1}.`,
+      String(current.length + 1),
+    )
+    if (orderInput === null) return
+
+    const order = Number(orderInput)
+    if (!Number.isInteger(order) || order < 1 || order > current.length + 1) {
+      toast({ title: `Please enter an order number between 1 and ${current.length + 1}.`, variant: "destructive" })
+      return
+    }
+
+    const next = [...current]
+    next.splice(order - 1, 0, line)
+    form.setValue(`panelSpecs.${specIndex}.breakdownText`, next.join("\n"))
+  }
+
+  const [newComponentDrafts, setNewComponentDrafts] = useState<Record<number, { component: string; note: string }>>({})
+
+  function updateNewComponentDraft(specIndex: number, field: "component" | "note", value: string) {
+    setNewComponentDrafts((prev) => {
+      const existing = prev[specIndex] ?? { component: "", note: "" }
+      return { ...prev, [specIndex]: { ...existing, [field]: value } }
+    })
+  }
+
+  /* Adding a brand-new component here both selects it for this quotation and saves it
+     back to Panel Master, so it shows up as a checklist option on future quotations too. */
+  function handleAddCustomComponent(specIndex: number, panelName: string, masterLines: string[]) {
+    const draft = newComponentDrafts[specIndex]
+    const component = draft?.component.trim()
+    if (!component) return
+    const note = draft?.note.trim() ?? ""
+    const line = note ? `${component} - ${note}` : component
+    const key = line.toLowerCase()
+
+    const current = (form.getValues(`panelSpecs.${specIndex}.breakdownText`) ?? "")
+      .split("\n").map((l) => l.trim()).filter(Boolean)
+    if (!current.some((l) => l.toLowerCase() === key)) {
+      form.setValue(`panelSpecs.${specIndex}.breakdownText`, [...current, line].join("\n"))
+    }
+
+    const alreadyInMaster = masterLines.some((l) => l.toLowerCase() === key)
+    if (!alreadyInMaster) {
+      const panel = panels?.find((p) => p.name === panelName)
+      if (panel) {
+        updatePanel.mutate(
+          { id: panel.id, data: { breakdownText: [...masterLines, line].join("\n") } },
+          {
+            onSuccess: () => {
+              queryClient.invalidateQueries({ queryKey: getListPanelsQueryKey() })
+              toast({ title: `Added "${component}" to ${panelName} in Panel Master` })
+            },
+            onError: () => toast({ title: "Added to this quotation, but failed to save it to Panel Master", variant: "destructive" }),
+          },
+        )
+      }
+    }
+
+    setNewComponentDrafts((prev) => ({ ...prev, [specIndex]: { component: "", note: "" } }))
   }
 
   const watchItems = useWatch({ control: form.control, name: "items" })
@@ -465,7 +525,7 @@ export default function QuotationForm() {
                                 <label key={line} className="flex items-start gap-2 text-sm cursor-pointer">
                                   <Checkbox
                                     checked={selectedLines.has(line)}
-                                    onCheckedChange={() => togglePanelBreakdownLine(index, masterLines, line)}
+                                    onCheckedChange={() => togglePanelBreakdownLine(index, line)}
                                     className="mt-0.5"
                                   />
                                   <span>{line}</span>
@@ -473,6 +533,35 @@ export default function QuotationForm() {
                               ))}
                             </div>
                           )}
+                          <div className="flex items-end gap-2 mt-2">
+                            <div className="flex-1">
+                              <label className="text-[11px] text-muted-foreground mb-1 block">New component</label>
+                              <Input
+                                className="h-8 text-sm"
+                                placeholder="e.g. 63A MCCB"
+                                value={newComponentDrafts[index]?.component ?? ""}
+                                onChange={(e) => updateNewComponentDraft(index, "component", e.target.value)}
+                              />
+                            </div>
+                            <div className="w-32">
+                              <label className="text-[11px] text-muted-foreground mb-1 block">Qty / Note</label>
+                              <Input
+                                className="h-8 text-sm"
+                                placeholder="1 NO"
+                                value={newComponentDrafts[index]?.note ?? ""}
+                                onChange={(e) => updateNewComponentDraft(index, "note", e.target.value)}
+                              />
+                            </div>
+                            <Button
+                              type="button" variant="outline" size="sm" className="h-8"
+                              onClick={() => handleAddCustomComponent(index, panelName, masterLines)}
+                            >
+                              <Plus className="w-4 h-4 mr-1" /> Add
+                            </Button>
+                          </div>
+                          <p className="text-[11px] text-muted-foreground mt-1">
+                            Adding a new component here also saves it to Panel Master's "{panelName}" so it's available next time.
+                          </p>
                         </div>
                         <div>
                           <label className="text-xs text-muted-foreground mb-1 block">Fine-tune wording (optional)</label>

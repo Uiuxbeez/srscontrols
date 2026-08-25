@@ -6,14 +6,20 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { Client } from './client';
+import type { InvoiceDocumentType } from './invoiceDocumentType';
 import type { InvoiceItem } from './invoiceItem';
+import type { Supplier } from './supplier';
 
 export interface Invoice {
   id: number;
   invoiceNo: number;
+  documentType: InvoiceDocumentType;
   date: string;
   clientId: number;
   client: Client;
+  /** @nullable */
+  supplierId?: number | null;
+  supplier?: Supplier | null;
   /** @nullable */
   workSite?: string | null;
   /** @nullable */

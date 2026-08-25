@@ -12,8 +12,14 @@ tags:
     description: Health operations
   - name: clients
     description: Client/buyer management
+  - name: suppliers
+    description: Supplier/vendor management
   - name: invoices
-    description: Invoice management
+    description: Invoice and Proforma Invoice management
+  - name: purchase-orders
+    description: Purchase Order management (addressed to a client)
+  - name: purchase-item-master
+    description: Per-client reusable list of Purchase Order line items
   - name: panels
     description: Panel master (name, component breakdown, size, price)
   - name: tech-spec-items
@@ -703,6 +709,115 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /suppliers:
+    get:
+      operationId: listSuppliers
+      tags: [suppliers]
+      summary: List all suppliers
+      responses:
+        "200":
+          description: List of suppliers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Supplier"
+    post:
+      operationId: createSupplier
+      tags: [suppliers]
+      summary: Create a supplier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SupplierInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Supplier"
+
+  /suppliers/{id}:
+    get:
+      operationId: getSupplier
+      tags: [suppliers]
+      summary: Get a supplier by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Supplier
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Supplier"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateSupplier
+      tags: [suppliers]
+      summary: Update a supplier
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SupplierUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Supplier"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteSupplier
+      tags: [suppliers]
+      summary: Delete a supplier
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /invoices/stats:
     get:
       operationId: getInvoiceStats
@@ -736,6 +851,13 @@ paths:
       operationId: getNextInvoiceNumber
       tags: [invoices]
       summary: Get the next invoice number
+      parameters:
+        - name: documentType
+          in: query
+          description: Numbering is scoped per document type — invoice and proforma each have their own sequence.
+          schema:
+            type: string
+            enum: [invoice, proforma]
       responses:
         "200":
           description: Next invoice number
@@ -758,6 +880,12 @@ paths:
           in: query
           schema:
             type: string
+        - name: documentType
+          in: query
+          description: Defaults to "invoice" when omitted.
+          schema:
+            type: string
+            enum: [invoice, proforma]
       responses:
         "200":
           description: List of invoices
@@ -862,6 +990,251 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /purchase-orders/next-number:
+    get:
+      operationId: getNextPurchaseOrderNumber
+      tags: [purchase-orders]
+      summary: Get the next purchase order number
+      responses:
+        "200":
+          description: Next purchase order number
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NextPurchaseOrderNumber"
+
+  /purchase-orders:
+    get:
+      operationId: listPurchaseOrders
+      tags: [purchase-orders]
+      summary: List all purchase orders
+      parameters:
+        - name: clientId
+          in: query
+          schema:
+            type: integer
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of purchase orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PurchaseOrderSummary"
+    post:
+      operationId: createPurchaseOrder
+      tags: [purchase-orders]
+      summary: Create a purchase order with items
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PurchaseOrderInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PurchaseOrder"
+
+  /purchase-orders/{id}:
+    get:
+      operationId: getPurchaseOrder
+      tags: [purchase-orders]
+      summary: Get a full purchase order with items
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Purchase order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PurchaseOrder"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updatePurchaseOrder
+      tags: [purchase-orders]
+      summary: Update a purchase order
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PurchaseOrderUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PurchaseOrder"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deletePurchaseOrder
+      tags: [purchase-orders]
+      summary: Delete a purchase order
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /purchase-item-master:
+    get:
+      operationId: listPurchaseItemMaster
+      tags: [purchase-item-master]
+      summary: List purchase item master entries, optionally filtered by client
+      parameters:
+        - name: clientId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of purchase item master entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PurchaseItemMaster"
+    post:
+      operationId: createPurchaseItemMaster
+      tags: [purchase-item-master]
+      summary: Create a purchase item master entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PurchaseItemMasterInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PurchaseItemMaster"
+
+  /purchase-item-master/{id}:
+    get:
+      operationId: getPurchaseItemMaster
+      tags: [purchase-item-master]
+      summary: Get a purchase item master entry by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Purchase item master entry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PurchaseItemMaster"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updatePurchaseItemMaster
+      tags: [purchase-item-master]
+      summary: Update a purchase item master entry
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PurchaseItemMasterUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PurchaseItemMaster"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deletePurchaseItemMaster
+      tags: [purchase-item-master]
+      summary: Delete a purchase item master entry
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -922,6 +1295,57 @@ components:
           type: string
 
     ClientUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        address:
+          type: string
+        gstin:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+
+    Supplier:
+      type: object
+      required: [id, name, address]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        address:
+          type: string
+        gstin:
+          type: ["string", "null"]
+        phone:
+          type: ["string", "null"]
+        email:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    SupplierInput:
+      type: object
+      required: [name, address]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        address:
+          type: string
+          minLength: 1
+        gstin:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+
+    SupplierUpdate:
       type: object
       properties:
         name:
@@ -1209,18 +1633,27 @@ components:
 
     Invoice:
       type: object
-      required: [id, invoiceNo, date, clientId, client, items, subtotal, cgstRate, sgstRate, cgstAmount, sgstAmount, roundOff, netTotal, amountInWords, createdAt]
+      required: [id, invoiceNo, documentType, date, clientId, client, items, subtotal, cgstRate, sgstRate, cgstAmount, sgstAmount, roundOff, netTotal, amountInWords, createdAt]
       properties:
         id:
           type: integer
         invoiceNo:
           type: integer
+        documentType:
+          type: string
+          enum: [invoice, proforma]
         date:
           type: string
         clientId:
           type: integer
         client:
           $ref: "#/components/schemas/Client"
+        supplierId:
+          type: ["integer", "null"]
+        supplier:
+          oneOf:
+            - $ref: "#/components/schemas/Supplier"
+            - type: "null"
         workSite:
           type: ["string", "null"]
         deliveryNote:
@@ -1274,9 +1707,15 @@ components:
       properties:
         invoiceNo:
           type: integer
+        documentType:
+          type: string
+          enum: [invoice, proforma]
+          description: Defaults to "invoice" when omitted.
         date:
           type: string
         clientId:
+          type: integer
+        supplierId:
           type: integer
         workSite:
           type: string
@@ -1317,6 +1756,8 @@ components:
         date:
           type: string
         clientId:
+          type: integer
+        supplierId:
           type: integer
         workSite:
           type: string
@@ -1374,7 +1815,7 @@ components:
 
     InvoiceStats:
       type: object
-      required: [totalInvoices, totalRevenue, thisMonthRevenue, thisMonthCount, lastMonthRevenue, lastMonthCount]
+      required: [totalInvoices, totalRevenue, thisMonthRevenue, thisMonthCount, lastMonthRevenue, lastMonthCount, thisMonthSubtotal, thisMonthCgst, thisMonthSgst, thisMonthIgst, thisMonthTax]
       properties:
         totalInvoices:
           type: integer
@@ -1388,6 +1829,21 @@ components:
           type: number
         lastMonthCount:
           type: integer
+        thisMonthSubtotal:
+          type: number
+          description: Sum of taxable value (subtotal) across this month's invoices.
+        thisMonthCgst:
+          type: number
+          description: Sum of CGST collected this month (intra-state invoices only).
+        thisMonthSgst:
+          type: number
+          description: Sum of SGST collected this month (intra-state invoices only).
+        thisMonthIgst:
+          type: number
+          description: Sum of IGST collected this month (inter-state invoices only).
+        thisMonthTax:
+          type: number
+          description: thisMonthCgst + thisMonthSgst + thisMonthIgst.
 
     NextInvoiceNumber:
       type: object
@@ -1395,3 +1851,224 @@ components:
       properties:
         nextNumber:
           type: integer
+
+    PurchaseOrderItem:
+      type: object
+      required: [id, purchaseOrderId, sNo, description, amount]
+      properties:
+        id:
+          type: integer
+        purchaseOrderId:
+          type: integer
+        sNo:
+          type: integer
+        description:
+          type: string
+        discountPct:
+          type: ["number", "null"]
+        qty:
+          type: ["number", "null"]
+        rate:
+          type: ["number", "null"]
+        per:
+          type: ["string", "null"]
+        amount:
+          type: number
+
+    PurchaseOrderItemInput:
+      type: object
+      required: [sNo, description, amount]
+      properties:
+        sNo:
+          type: integer
+        description:
+          type: string
+          minLength: 1
+        discountPct:
+          type: number
+        qty:
+          type: number
+        rate:
+          type: number
+        per:
+          type: string
+        amount:
+          type: number
+
+    PurchaseOrder:
+      type: object
+      required: [id, poNo, date, clientId, client, items, subtotal, cgstRate, sgstRate, cgstAmount, sgstAmount, roundOff, netTotal, amountInWords, createdAt]
+      properties:
+        id:
+          type: integer
+        poNo:
+          type: integer
+        date:
+          type: string
+        clientId:
+          type: integer
+        client:
+          $ref: "#/components/schemas/Client"
+        deliveryLocation:
+          type: ["string", "null"]
+        termsOfDelivery:
+          type: ["string", "null"]
+        modeOfPayment:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/PurchaseOrderItem"
+        subtotal:
+          type: number
+        cgstRate:
+          type: number
+        sgstRate:
+          type: number
+        cgstAmount:
+          type: number
+        sgstAmount:
+          type: number
+        roundOff:
+          type: number
+        netTotal:
+          type: number
+        amountInWords:
+          type: string
+        createdAt:
+          type: string
+
+    PurchaseOrderInput:
+      type: object
+      required: [poNo, date, clientId, items, cgstRate, sgstRate]
+      properties:
+        poNo:
+          type: integer
+        date:
+          type: string
+        clientId:
+          type: integer
+        deliveryLocation:
+          type: string
+        termsOfDelivery:
+          type: string
+        modeOfPayment:
+          type: string
+        notes:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/PurchaseOrderItemInput"
+        cgstRate:
+          type: number
+        sgstRate:
+          type: number
+
+    PurchaseOrderUpdate:
+      type: object
+      properties:
+        date:
+          type: string
+        clientId:
+          type: integer
+        deliveryLocation:
+          type: string
+        termsOfDelivery:
+          type: string
+        modeOfPayment:
+          type: string
+        notes:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/PurchaseOrderItemInput"
+        cgstRate:
+          type: number
+        sgstRate:
+          type: number
+
+    PurchaseOrderSummary:
+      type: object
+      required: [id, poNo, date, clientId, clientName, netTotal, createdAt]
+      properties:
+        id:
+          type: integer
+        poNo:
+          type: integer
+        date:
+          type: string
+        clientId:
+          type: integer
+        clientName:
+          type: string
+        netTotal:
+          type: number
+        createdAt:
+          type: string
+
+    NextPurchaseOrderNumber:
+      type: object
+      required: [nextNumber]
+      properties:
+        nextNumber:
+          type: integer
+
+    PurchaseItemMaster:
+      type: object
+      required: [id, clientId, description, createdAt]
+      properties:
+        id:
+          type: integer
+        clientId:
+          type: integer
+        description:
+          type: string
+        rate:
+          type: ["number", "null"]
+        per:
+          type: ["string", "null"]
+        discountPct:
+          type: ["number", "null"]
+        createdAt:
+          type: string
+
+    PurchaseItemMasterInput:
+      type: object
+      required: [clientId, description]
+      properties:
+        clientId:
+          type: integer
+        description:
+          type: string
+          minLength: 1
+        rate:
+          type: number
+          minimum: 0
+        per:
+          type: string
+        discountPct:
+          type: number
+          minimum: 0
+          maximum: 100
+
+    PurchaseItemMasterUpdate:
+      type: object
+      properties:
+        clientId:
+          type: integer
+        description:
+          type: string
+          minLength: 1
+        rate:
+          type: number
+          minimum: 0
+        per:
+          type: string
+        discountPct:
+          type: number
+          minimum: 0
+          maximum: 100

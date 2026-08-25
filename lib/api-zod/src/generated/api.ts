@@ -600,6 +600,106 @@ export const DeleteItemResponse = zod.object({
 
 
 /**
+ * @summary List all suppliers
+ */
+export const ListSuppliersResponseItem = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "address": zod.string(),
+  "gstin": zod.string().nullish(),
+  "phone": zod.string().nullish(),
+  "email": zod.string().nullish(),
+  "createdAt": zod.string().optional()
+})
+export const ListSuppliersResponse = zod.array(ListSuppliersResponseItem)
+
+
+/**
+ * @summary Create a supplier
+ */
+
+
+
+
+export const CreateSupplierBody = zod.object({
+  "name": zod.string().min(1),
+  "address": zod.string().min(1),
+  "gstin": zod.string().optional(),
+  "phone": zod.string().optional(),
+  "email": zod.string().optional()
+})
+
+export const CreateSupplierResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "address": zod.string(),
+  "gstin": zod.string().nullish(),
+  "phone": zod.string().nullish(),
+  "email": zod.string().nullish(),
+  "createdAt": zod.string().optional()
+})
+
+
+/**
+ * @summary Get a supplier by ID
+ */
+export const GetSupplierParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetSupplierResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "address": zod.string(),
+  "gstin": zod.string().nullish(),
+  "phone": zod.string().nullish(),
+  "email": zod.string().nullish(),
+  "createdAt": zod.string().optional()
+})
+
+
+/**
+ * @summary Update a supplier
+ */
+export const UpdateSupplierParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+
+
+export const UpdateSupplierBody = zod.object({
+  "name": zod.string().min(1).optional(),
+  "address": zod.string().optional(),
+  "gstin": zod.string().optional(),
+  "phone": zod.string().optional(),
+  "email": zod.string().optional()
+})
+
+export const UpdateSupplierResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "address": zod.string(),
+  "gstin": zod.string().nullish(),
+  "phone": zod.string().nullish(),
+  "email": zod.string().nullish(),
+  "createdAt": zod.string().optional()
+})
+
+
+/**
+ * @summary Delete a supplier
+ */
+export const DeleteSupplierParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteSupplierResponse = zod.object({
+  "success": zod.boolean()
+})
+
+
+/**
  * @summary Get invoice statistics for dashboard
  */
 export const GetInvoiceStatsResponse = zod.object({
@@ -608,7 +708,12 @@ export const GetInvoiceStatsResponse = zod.object({
   "thisMonthRevenue": zod.number(),
   "thisMonthCount": zod.number(),
   "lastMonthRevenue": zod.number(),
-  "lastMonthCount": zod.number()
+  "lastMonthCount": zod.number(),
+  "thisMonthSubtotal": zod.number().describe('Sum of taxable value (subtotal) across this month\'s invoices.'),
+  "thisMonthCgst": zod.number().describe('Sum of CGST collected this month (intra-state invoices only).'),
+  "thisMonthSgst": zod.number().describe('Sum of SGST collected this month (intra-state invoices only).'),
+  "thisMonthIgst": zod.number().describe('Sum of IGST collected this month (inter-state invoices only).'),
+  "thisMonthTax": zod.number().describe('thisMonthCgst + thisMonthSgst + thisMonthIgst.')
 })
 
 
@@ -631,6 +736,10 @@ export const GetRecentInvoicesResponse = zod.array(GetRecentInvoicesResponseItem
 /**
  * @summary Get the next invoice number
  */
+export const GetNextInvoiceNumberQueryParams = zod.object({
+  "documentType": zod.enum(['invoice', 'proforma']).optional().describe('Numbering is scoped per document type — invoice and proforma each have their own sequence.')
+})
+
 export const GetNextInvoiceNumberResponse = zod.object({
   "nextNumber": zod.number()
 })
@@ -641,7 +750,8 @@ export const GetNextInvoiceNumberResponse = zod.object({
  */
 export const ListInvoicesQueryParams = zod.object({
   "clientId": zod.coerce.number().optional(),
-  "search": zod.coerce.string().optional()
+  "search": zod.coerce.string().optional(),
+  "documentType": zod.enum(['invoice', 'proforma']).optional().describe('Defaults to \"invoice\" when omitted.')
 })
 
 export const ListInvoicesResponseItem = zod.object({
@@ -665,8 +775,10 @@ export const ListInvoicesResponse = zod.array(ListInvoicesResponseItem)
 
 export const CreateInvoiceBody = zod.object({
   "invoiceNo": zod.number(),
+  "documentType": zod.enum(['invoice', 'proforma']).optional().describe('Defaults to \"invoice\" when omitted.'),
   "date": zod.string(),
   "clientId": zod.number(),
+  "supplierId": zod.number().optional(),
   "workSite": zod.string().optional(),
   "deliveryNote": zod.string().optional(),
   "modeOfPayment": zod.string().optional(),
@@ -695,6 +807,7 @@ export const CreateInvoiceBody = zod.object({
 export const CreateInvoiceResponse = zod.object({
   "id": zod.number(),
   "invoiceNo": zod.number(),
+  "documentType": zod.enum(['invoice', 'proforma']),
   "date": zod.string(),
   "clientId": zod.number(),
   "client": zod.object({
@@ -706,6 +819,16 @@ export const CreateInvoiceResponse = zod.object({
   "email": zod.string().nullish(),
   "createdAt": zod.string().optional()
 }),
+  "supplierId": zod.number().nullish(),
+  "supplier": zod.union([zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "address": zod.string(),
+  "gstin": zod.string().nullish(),
+  "phone": zod.string().nullish(),
+  "email": zod.string().nullish(),
+  "createdAt": zod.string().optional()
+}),zod.null()]).optional(),
   "workSite": zod.string().nullish(),
   "deliveryNote": zod.string().nullish(),
   "modeOfPayment": zod.string().nullish(),
@@ -751,6 +874,7 @@ export const GetInvoiceParams = zod.object({
 export const GetInvoiceResponse = zod.object({
   "id": zod.number(),
   "invoiceNo": zod.number(),
+  "documentType": zod.enum(['invoice', 'proforma']),
   "date": zod.string(),
   "clientId": zod.number(),
   "client": zod.object({
@@ -762,6 +886,16 @@ export const GetInvoiceResponse = zod.object({
   "email": zod.string().nullish(),
   "createdAt": zod.string().optional()
 }),
+  "supplierId": zod.number().nullish(),
+  "supplier": zod.union([zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "address": zod.string(),
+  "gstin": zod.string().nullish(),
+  "phone": zod.string().nullish(),
+  "email": zod.string().nullish(),
+  "createdAt": zod.string().optional()
+}),zod.null()]).optional(),
   "workSite": zod.string().nullish(),
   "deliveryNote": zod.string().nullish(),
   "modeOfPayment": zod.string().nullish(),
@@ -810,6 +944,7 @@ export const UpdateInvoiceParams = zod.object({
 export const UpdateInvoiceBody = zod.object({
   "date": zod.string().optional(),
   "clientId": zod.number().optional(),
+  "supplierId": zod.number().optional(),
   "workSite": zod.string().optional(),
   "deliveryNote": zod.string().optional(),
   "modeOfPayment": zod.string().optional(),
@@ -838,6 +973,7 @@ export const UpdateInvoiceBody = zod.object({
 export const UpdateInvoiceResponse = zod.object({
   "id": zod.number(),
   "invoiceNo": zod.number(),
+  "documentType": zod.enum(['invoice', 'proforma']),
   "date": zod.string(),
   "clientId": zod.number(),
   "client": zod.object({
@@ -849,6 +985,16 @@ export const UpdateInvoiceResponse = zod.object({
   "email": zod.string().nullish(),
   "createdAt": zod.string().optional()
 }),
+  "supplierId": zod.number().nullish(),
+  "supplier": zod.union([zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "address": zod.string(),
+  "gstin": zod.string().nullish(),
+  "phone": zod.string().nullish(),
+  "email": zod.string().nullish(),
+  "createdAt": zod.string().optional()
+}),zod.null()]).optional(),
   "workSite": zod.string().nullish(),
   "deliveryNote": zod.string().nullish(),
   "modeOfPayment": zod.string().nullish(),
@@ -892,6 +1038,346 @@ export const DeleteInvoiceParams = zod.object({
 })
 
 export const DeleteInvoiceResponse = zod.object({
+  "success": zod.boolean()
+})
+
+
+/**
+ * @summary Get the next purchase order number
+ */
+export const GetNextPurchaseOrderNumberResponse = zod.object({
+  "nextNumber": zod.number()
+})
+
+
+/**
+ * @summary List all purchase orders
+ */
+export const ListPurchaseOrdersQueryParams = zod.object({
+  "clientId": zod.coerce.number().optional(),
+  "search": zod.coerce.string().optional()
+})
+
+export const ListPurchaseOrdersResponseItem = zod.object({
+  "id": zod.number(),
+  "poNo": zod.number(),
+  "date": zod.string(),
+  "clientId": zod.number(),
+  "clientName": zod.string(),
+  "netTotal": zod.number(),
+  "createdAt": zod.string()
+})
+export const ListPurchaseOrdersResponse = zod.array(ListPurchaseOrdersResponseItem)
+
+
+/**
+ * @summary Create a purchase order with items
+ */
+
+
+
+export const CreatePurchaseOrderBody = zod.object({
+  "poNo": zod.number(),
+  "date": zod.string(),
+  "clientId": zod.number(),
+  "deliveryLocation": zod.string().optional(),
+  "termsOfDelivery": zod.string().optional(),
+  "modeOfPayment": zod.string().optional(),
+  "notes": zod.string().optional(),
+  "items": zod.array(zod.object({
+  "sNo": zod.number(),
+  "description": zod.string().min(1),
+  "discountPct": zod.number().optional(),
+  "qty": zod.number().optional(),
+  "rate": zod.number().optional(),
+  "per": zod.string().optional(),
+  "amount": zod.number()
+})),
+  "cgstRate": zod.number(),
+  "sgstRate": zod.number()
+})
+
+export const CreatePurchaseOrderResponse = zod.object({
+  "id": zod.number(),
+  "poNo": zod.number(),
+  "date": zod.string(),
+  "clientId": zod.number(),
+  "client": zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "address": zod.string(),
+  "gstin": zod.string().nullish(),
+  "phone": zod.string().nullish(),
+  "email": zod.string().nullish(),
+  "createdAt": zod.string().optional()
+}),
+  "deliveryLocation": zod.string().nullish(),
+  "termsOfDelivery": zod.string().nullish(),
+  "modeOfPayment": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "items": zod.array(zod.object({
+  "id": zod.number(),
+  "purchaseOrderId": zod.number(),
+  "sNo": zod.number(),
+  "description": zod.string(),
+  "discountPct": zod.number().nullish(),
+  "qty": zod.number().nullish(),
+  "rate": zod.number().nullish(),
+  "per": zod.string().nullish(),
+  "amount": zod.number()
+})),
+  "subtotal": zod.number(),
+  "cgstRate": zod.number(),
+  "sgstRate": zod.number(),
+  "cgstAmount": zod.number(),
+  "sgstAmount": zod.number(),
+  "roundOff": zod.number(),
+  "netTotal": zod.number(),
+  "amountInWords": zod.string(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Get a full purchase order with items
+ */
+export const GetPurchaseOrderParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetPurchaseOrderResponse = zod.object({
+  "id": zod.number(),
+  "poNo": zod.number(),
+  "date": zod.string(),
+  "clientId": zod.number(),
+  "client": zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "address": zod.string(),
+  "gstin": zod.string().nullish(),
+  "phone": zod.string().nullish(),
+  "email": zod.string().nullish(),
+  "createdAt": zod.string().optional()
+}),
+  "deliveryLocation": zod.string().nullish(),
+  "termsOfDelivery": zod.string().nullish(),
+  "modeOfPayment": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "items": zod.array(zod.object({
+  "id": zod.number(),
+  "purchaseOrderId": zod.number(),
+  "sNo": zod.number(),
+  "description": zod.string(),
+  "discountPct": zod.number().nullish(),
+  "qty": zod.number().nullish(),
+  "rate": zod.number().nullish(),
+  "per": zod.string().nullish(),
+  "amount": zod.number()
+})),
+  "subtotal": zod.number(),
+  "cgstRate": zod.number(),
+  "sgstRate": zod.number(),
+  "cgstAmount": zod.number(),
+  "sgstAmount": zod.number(),
+  "roundOff": zod.number(),
+  "netTotal": zod.number(),
+  "amountInWords": zod.string(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Update a purchase order
+ */
+export const UpdatePurchaseOrderParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+
+
+export const UpdatePurchaseOrderBody = zod.object({
+  "date": zod.string().optional(),
+  "clientId": zod.number().optional(),
+  "deliveryLocation": zod.string().optional(),
+  "termsOfDelivery": zod.string().optional(),
+  "modeOfPayment": zod.string().optional(),
+  "notes": zod.string().optional(),
+  "items": zod.array(zod.object({
+  "sNo": zod.number(),
+  "description": zod.string().min(1),
+  "discountPct": zod.number().optional(),
+  "qty": zod.number().optional(),
+  "rate": zod.number().optional(),
+  "per": zod.string().optional(),
+  "amount": zod.number()
+})).optional(),
+  "cgstRate": zod.number().optional(),
+  "sgstRate": zod.number().optional()
+})
+
+export const UpdatePurchaseOrderResponse = zod.object({
+  "id": zod.number(),
+  "poNo": zod.number(),
+  "date": zod.string(),
+  "clientId": zod.number(),
+  "client": zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "address": zod.string(),
+  "gstin": zod.string().nullish(),
+  "phone": zod.string().nullish(),
+  "email": zod.string().nullish(),
+  "createdAt": zod.string().optional()
+}),
+  "deliveryLocation": zod.string().nullish(),
+  "termsOfDelivery": zod.string().nullish(),
+  "modeOfPayment": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "items": zod.array(zod.object({
+  "id": zod.number(),
+  "purchaseOrderId": zod.number(),
+  "sNo": zod.number(),
+  "description": zod.string(),
+  "discountPct": zod.number().nullish(),
+  "qty": zod.number().nullish(),
+  "rate": zod.number().nullish(),
+  "per": zod.string().nullish(),
+  "amount": zod.number()
+})),
+  "subtotal": zod.number(),
+  "cgstRate": zod.number(),
+  "sgstRate": zod.number(),
+  "cgstAmount": zod.number(),
+  "sgstAmount": zod.number(),
+  "roundOff": zod.number(),
+  "netTotal": zod.number(),
+  "amountInWords": zod.string(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Delete a purchase order
+ */
+export const DeletePurchaseOrderParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeletePurchaseOrderResponse = zod.object({
+  "success": zod.boolean()
+})
+
+
+/**
+ * @summary List purchase item master entries, optionally filtered by client
+ */
+export const ListPurchaseItemMasterQueryParams = zod.object({
+  "clientId": zod.coerce.number().optional()
+})
+
+export const ListPurchaseItemMasterResponseItem = zod.object({
+  "id": zod.number(),
+  "clientId": zod.number(),
+  "description": zod.string(),
+  "rate": zod.number().nullish(),
+  "per": zod.string().nullish(),
+  "discountPct": zod.number().nullish(),
+  "createdAt": zod.string()
+})
+export const ListPurchaseItemMasterResponse = zod.array(ListPurchaseItemMasterResponseItem)
+
+
+/**
+ * @summary Create a purchase item master entry
+ */
+
+export const createPurchaseItemMasterBodyRateMin = 0;
+
+export const createPurchaseItemMasterBodyDiscountPctMin = 0;
+export const createPurchaseItemMasterBodyDiscountPctMax = 100;
+
+
+
+export const CreatePurchaseItemMasterBody = zod.object({
+  "clientId": zod.number(),
+  "description": zod.string().min(1),
+  "rate": zod.number().min(createPurchaseItemMasterBodyRateMin).optional(),
+  "per": zod.string().optional(),
+  "discountPct": zod.number().min(createPurchaseItemMasterBodyDiscountPctMin).max(createPurchaseItemMasterBodyDiscountPctMax).optional()
+})
+
+export const CreatePurchaseItemMasterResponse = zod.object({
+  "id": zod.number(),
+  "clientId": zod.number(),
+  "description": zod.string(),
+  "rate": zod.number().nullish(),
+  "per": zod.string().nullish(),
+  "discountPct": zod.number().nullish(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Get a purchase item master entry by ID
+ */
+export const GetPurchaseItemMasterParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetPurchaseItemMasterResponse = zod.object({
+  "id": zod.number(),
+  "clientId": zod.number(),
+  "description": zod.string(),
+  "rate": zod.number().nullish(),
+  "per": zod.string().nullish(),
+  "discountPct": zod.number().nullish(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Update a purchase item master entry
+ */
+export const UpdatePurchaseItemMasterParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+export const updatePurchaseItemMasterBodyRateMin = 0;
+
+export const updatePurchaseItemMasterBodyDiscountPctMin = 0;
+export const updatePurchaseItemMasterBodyDiscountPctMax = 100;
+
+
+
+export const UpdatePurchaseItemMasterBody = zod.object({
+  "clientId": zod.number().optional(),
+  "description": zod.string().min(1).optional(),
+  "rate": zod.number().min(updatePurchaseItemMasterBodyRateMin).optional(),
+  "per": zod.string().optional(),
+  "discountPct": zod.number().min(updatePurchaseItemMasterBodyDiscountPctMin).max(updatePurchaseItemMasterBodyDiscountPctMax).optional()
+})
+
+export const UpdatePurchaseItemMasterResponse = zod.object({
+  "id": zod.number(),
+  "clientId": zod.number(),
+  "description": zod.string(),
+  "rate": zod.number().nullish(),
+  "per": zod.string().nullish(),
+  "discountPct": zod.number().nullish(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Delete a purchase item master entry
+ */
+export const DeletePurchaseItemMasterParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeletePurchaseItemMasterResponse = zod.object({
   "success": zod.boolean()
 })
 

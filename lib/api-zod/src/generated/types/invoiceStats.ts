@@ -13,4 +13,14 @@ export interface InvoiceStats {
   thisMonthCount: number;
   lastMonthRevenue: number;
   lastMonthCount: number;
+  /** Sum of taxable value (subtotal) across this month's invoices. */
+  thisMonthSubtotal: number;
+  /** Sum of CGST collected this month (intra-state invoices only). */
+  thisMonthCgst: number;
+  /** Sum of SGST collected this month (intra-state invoices only). */
+  thisMonthSgst: number;
+  /** Sum of IGST collected this month (inter-state invoices only). */
+  thisMonthIgst: number;
+  /** thisMonthCgst + thisMonthSgst + thisMonthIgst. */
+  thisMonthTax: number;
 }

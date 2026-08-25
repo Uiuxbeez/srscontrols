@@ -4,15 +4,15 @@ import { useForm, useFieldArray, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import {
-  useCreateInvoice,
-  useUpdateInvoice,
-  useGetInvoice,
+  useCreatePurchaseOrder,
+  useUpdatePurchaseOrder,
+  useGetPurchaseOrder,
   useListClients,
-  useListSuppliers,
-  useGetNextInvoiceNumber,
-  getGetInvoiceQueryKey,
-  getListSuppliersQueryKey,
-  getGetNextInvoiceNumberQueryKey,
+  useListPurchaseItemMaster,
+  useGetNextPurchaseOrderNumber,
+  getGetPurchaseOrderQueryKey,
+  getGetNextPurchaseOrderNumberQueryKey,
+  getListPurchaseItemMasterQueryKey
 } from "@workspace/api-client-react"
 import { useQueryClient } from "@tanstack/react-query"
 
@@ -26,8 +26,10 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox"
 import { useToast } from "@/hooks/use-toast"
 import { ArrowLeft, Save, Plus, Trash2 } from "lucide-react"
 import { Link } from "wouter"
@@ -38,7 +40,7 @@ import { formatCurrency } from "@/lib/utils"
 const itemSchema = z.object({
   sNo: z.number(),
   description: z.string().min(1, "Required"),
-  hsnSac: z.string().optional(),
+  discountPct: z.coerce.number().min(0).max(100).optional(),
   qty: z.coerce.number().optional(),
   rate: z.coerce.number().optional(),
   per: z.string().optional(),
@@ -46,22 +48,13 @@ const itemSchema = z.object({
 })
 
 const formSchema = z.object({
-  invoiceNo: z.coerce.number().min(1),
+  poNo: z.coerce.number().min(1),
   date: z.string().min(1, "Date is required"),
   clientId: z.coerce.number().min(1, "Client is required"),
-  supplierId: z.coerce.number().optional(),
-  workSite: z.string().optional(),
-  deliveryNote: z.string().optional(),
-  modeOfPayment: z.string().optional(),
-  suppliersRef: z.string().optional(),
-  othersRef: z.string().optional(),
-  buyersOrderNo: z.string().optional(),
-  buyersOrderDate: z.string().optional(),
-  despatchDocNo: z.string().optional(),
-  despatchDocDate: z.string().optional(),
-  despatchedThrough: z.string().optional(),
-  destination: z.string().optional(),
+  deliveryLocation: z.string().optional(),
   termsOfDelivery: z.string().optional(),
+  modeOfPayment: z.string().optional(),
+  notes: z.string().optional(),
   items: z.array(itemSchema).min(1, "At least one item is required"),
   cgstRate: z.coerce.number(),
   sgstRate: z.coerce.number(),
@@ -69,62 +62,47 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>
 
-interface InvoiceFormProps {
-  documentType?: "invoice" | "proforma"
+function calcAmount(qty?: number, rate?: number, discountPct?: number): number {
+  if (!qty || !rate) return 0
+  const gross = qty * rate
+  const discount = discountPct ? (gross * discountPct) / 100 : 0
+  return gross - discount
 }
 
-export default function InvoiceForm({ documentType = "invoice" }: InvoiceFormProps) {
-  const isProforma = documentType === "proforma"
-  const basePath = isProforma ? "/proforma-invoices" : "/invoices"
-  const numberPrefix = isProforma ? "PRO-" : "INV-"
-  const docLabel = isProforma ? "Proforma Invoice" : "Invoice"
-
+export default function PurchaseOrderForm() {
   const [, setLocation] = useLocation()
   const params = useParams()
   const isNew = !params.id || params.id === "new"
-  const invoiceId = isNew ? null : Number(params.id)
+  const poId = isNew ? null : Number(params.id)
 
   const { toast } = useToast()
   const queryClient = useQueryClient()
 
   const { data: clients, isLoading: clientsLoading } = useListClients()
-  const { data: suppliers } = useListSuppliers({ query: { enabled: isProforma, queryKey: getListSuppliersQueryKey() } })
-  const { data: nextNumData } = useGetNextInvoiceNumber(
-    { documentType },
-    { query: { enabled: isNew, queryKey: getGetNextInvoiceNumberQueryKey({ documentType }) } },
-  )
-  const { data: invoice, isLoading: invoiceLoading } = useGetInvoice(invoiceId as number, {
+  const { data: nextNumData } = useGetNextPurchaseOrderNumber({ query: { enabled: isNew, queryKey: getGetNextPurchaseOrderNumberQueryKey() } })
+  const { data: po, isLoading: poLoading } = useGetPurchaseOrder(poId as number, {
     query: {
-      enabled: !!invoiceId,
-      queryKey: getGetInvoiceQueryKey(invoiceId as number)
+      enabled: !!poId,
+      queryKey: getGetPurchaseOrderQueryKey(poId as number)
     }
   })
 
-  const createInvoice = useCreateInvoice()
-  const updateInvoice = useUpdateInvoice()
+  const createPo = useCreatePurchaseOrder()
+  const updatePo = useUpdatePurchaseOrder()
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      invoiceNo: 1,
+      poNo: 1,
       date: new Date().toISOString().split('T')[0],
       clientId: 0,
-      supplierId: undefined,
-      workSite: "",
-      deliveryNote: "",
-      modeOfPayment: "",
-      suppliersRef: "",
-      othersRef: "",
-      buyersOrderNo: "",
-      buyersOrderDate: "",
-      despatchDocNo: "",
-      despatchDocDate: "",
-      despatchedThrough: "",
-      destination: "",
+      deliveryLocation: "",
       termsOfDelivery: "",
+      modeOfPayment: "",
+      notes: "",
       cgstRate: 9,
       sgstRate: 9,
-      items: [{ sNo: 1, description: "", hsnSac: "8537", qty: 1, rate: 0, per: "Nos", amount: 0 }]
+      items: [{ sNo: 1, description: "", discountPct: 0, qty: 1, rate: 0, per: "Nos", amount: 0 }]
     },
   })
 
@@ -133,30 +111,50 @@ export default function InvoiceForm({ documentType = "invoice" }: InvoiceFormPro
     name: "items"
   })
 
-  // Watch for changes to calculate item amounts and totals
   const watchItems = useWatch({ control: form.control, name: "items" })
   const watchCgstRate = useWatch({ control: form.control, name: "cgstRate" }) || 0
   const watchSgstRate = useWatch({ control: form.control, name: "sgstRate" }) || 0
   const watchClientId = useWatch({ control: form.control, name: "clientId" })
 
-  // GST law: CGST+SGST for intra-state, IGST for inter-state — determined by the client's
-  // GSTIN state-code prefix vs. SRS Controls' own. The underlying cgstRate/sgstRate fields
-  // still store the split (kept in sync so subtotal math never changes); only the label and
-  // input grouping shown to the user switches.
   const selectedClient = clients?.find((c) => c.id === watchClientId)
   const interState = isInterState(selectedClient?.gstin)
 
-  // Auto-calculate item amounts if qty & rate are present
+  const { data: masterItems } = useListPurchaseItemMaster(
+    { clientId: watchClientId },
+    { query: { enabled: !!watchClientId, queryKey: getListPurchaseItemMasterQueryKey({ clientId: watchClientId }) } },
+  )
+  const selectedDescriptions = new Set(
+    watchItems.map((i) => (i?.description ?? "").trim().toLowerCase()).filter(Boolean),
+  )
+
+  function toggleMasterItem(entry: NonNullable<typeof masterItems>[number]) {
+    const key = entry.description.trim().toLowerCase()
+    const idx = watchItems.findIndex((i) => (i?.description ?? "").trim().toLowerCase() === key)
+    if (idx !== -1) {
+      remove(idx)
+    } else {
+      append({
+        sNo: fields.length + 1,
+        description: entry.description,
+        discountPct: entry.discountPct ?? 0,
+        qty: 1,
+        rate: entry.rate ?? 0,
+        per: entry.per || "Nos",
+        amount: calcAmount(1, entry.rate ?? 0, entry.discountPct ?? 0),
+      })
+    }
+  }
+
+  // Auto-calculate item amounts from qty × rate × (1 - discount%)
   useEffect(() => {
-    const subscription = form.watch((value, { name, type }) => {
-      if (name?.startsWith('items.') && (name.endsWith('.qty') || name.endsWith('.rate'))) {
+    const subscription = form.watch((value, { name }) => {
+      if (name?.startsWith('items.') && (name.endsWith('.qty') || name.endsWith('.rate') || name.endsWith('.discountPct'))) {
         const match = name.match(/items\.(\d+)/)
         if (match) {
           const index = parseInt(match[1], 10)
           const item = value.items?.[index]
-          if (item && item.qty && item.rate) {
-            const amount = Number(item.qty) * Number(item.rate)
-            form.setValue(`items.${index}.amount`, amount)
+          if (item) {
+            form.setValue(`items.${index}.amount`, calcAmount(Number(item.qty) || 0, Number(item.rate) || 0, Number(item.discountPct) || 0))
           }
         }
       }
@@ -176,35 +174,26 @@ export default function InvoiceForm({ documentType = "invoice" }: InvoiceFormPro
 
   useEffect(() => {
     if (isNew && nextNumData) {
-      form.setValue("invoiceNo", nextNumData.nextNumber)
+      form.setValue("poNo", nextNumData.nextNumber)
     }
   }, [isNew, nextNumData, form])
 
   useEffect(() => {
-    if (invoice) {
+    if (po) {
       form.reset({
-        invoiceNo: invoice.invoiceNo,
-        date: invoice.date.split('T')[0], // handle Date string
-        clientId: invoice.clientId,
-        supplierId: invoice.supplierId ?? undefined,
-        workSite: invoice.workSite || "",
-        deliveryNote: invoice.deliveryNote || "",
-        modeOfPayment: invoice.modeOfPayment || "",
-        suppliersRef: invoice.suppliersRef || "",
-        othersRef: invoice.othersRef || "",
-        buyersOrderNo: invoice.buyersOrderNo || "",
-        buyersOrderDate: invoice.buyersOrderDate ? invoice.buyersOrderDate.split('T')[0] : "",
-        despatchDocNo: invoice.despatchDocNo || "",
-        despatchDocDate: invoice.despatchDocDate ? invoice.despatchDocDate.split('T')[0] : "",
-        despatchedThrough: invoice.despatchedThrough || "",
-        destination: invoice.destination || "",
-        termsOfDelivery: invoice.termsOfDelivery || "",
-        cgstRate: invoice.cgstRate,
-        sgstRate: invoice.sgstRate,
-        items: invoice.items.map(item => ({
+        poNo: po.poNo,
+        date: po.date.split('T')[0],
+        clientId: po.clientId,
+        deliveryLocation: po.deliveryLocation || "",
+        termsOfDelivery: po.termsOfDelivery || "",
+        modeOfPayment: po.modeOfPayment || "",
+        notes: po.notes || "",
+        cgstRate: po.cgstRate,
+        sgstRate: po.sgstRate,
+        items: po.items.map(item => ({
           sNo: item.sNo,
           description: item.description,
-          hsnSac: item.hsnSac || "",
+          discountPct: item.discountPct || 0,
           qty: item.qty || undefined,
           rate: item.rate || undefined,
           per: item.per || "",
@@ -212,38 +201,36 @@ export default function InvoiceForm({ documentType = "invoice" }: InvoiceFormPro
         }))
       })
     }
-  }, [invoice, form])
+  }, [po, form])
 
   function onSubmit(values: FormValues) {
-    const payload = { ...values, documentType }
     if (isNew) {
-      createInvoice.mutate({ data: payload }, {
+      createPo.mutate({ data: values }, {
         onSuccess: (data) => {
-          toast({ title: `${docLabel} created successfully` })
-          setLocation(`${basePath}/${data.id}`)
+          toast({ title: "Purchase order created successfully" })
+          setLocation(`/purchase-orders/${data.id}`)
         },
         onError: () => {
-          toast({ title: `Failed to create ${docLabel.toLowerCase()}`, variant: "destructive" })
+          toast({ title: "Failed to create purchase order", variant: "destructive" })
         }
       })
     } else {
-      // API generated schema requires data wrapping update values, but partial structure
-      updateInvoice.mutate({ id: invoiceId as number, data: payload }, {
+      updatePo.mutate({ id: poId as number, data: values }, {
         onSuccess: (updatedData) => {
-          toast({ title: `${docLabel} updated successfully` })
-          queryClient.setQueryData(getGetInvoiceQueryKey(invoiceId as number), updatedData)
-          setLocation(`${basePath}/${invoiceId}`)
+          toast({ title: "Purchase order updated successfully" })
+          queryClient.setQueryData(getGetPurchaseOrderQueryKey(poId as number), updatedData)
+          setLocation(`/purchase-orders/${poId}`)
         },
         onError: () => {
-          toast({ title: `Failed to update ${docLabel.toLowerCase()}`, variant: "destructive" })
+          toast({ title: "Failed to update purchase order", variant: "destructive" })
         }
       })
     }
   }
 
-  const isPending = createInvoice.isPending || updateInvoice.isPending
+  const isPending = createPo.isPending || updatePo.isPending
 
-  if (!isNew && invoiceLoading) {
+  if (!isNew && poLoading) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-8 w-64" />
@@ -256,16 +243,16 @@ export default function InvoiceForm({ documentType = "invoice" }: InvoiceFormPro
     <div className="space-y-6 max-w-5xl mx-auto pb-12">
       <div className="flex items-center gap-4">
         <Button variant="outline" size="icon" asChild>
-          <Link href={basePath}>
+          <Link href="/purchase-orders">
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </Button>
         <div>
           <h1 className="text-2xl font-bold tracking-tight">
-            {isNew ? `New ${docLabel}` : `Edit ${docLabel} ${numberPrefix}${invoice?.invoiceNo}`}
+            {isNew ? "New Purchase Order" : `Edit Purchase Order PO-${po?.poNo}`}
           </h1>
           <p className="text-muted-foreground">
-            {isNew ? `Create a new ${docLabel.toLowerCase()}.` : `Update ${docLabel.toLowerCase()} details.`}
+            {isNew ? "Create a new purchase order." : "Update purchase order details."}
           </p>
         </div>
       </div>
@@ -279,10 +266,10 @@ export default function InvoiceForm({ documentType = "invoice" }: InvoiceFormPro
             <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <FormField
                 control={form.control}
-                name="invoiceNo"
+                name="poNo"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{docLabel} No</FormLabel>
+                    <FormLabel>PO No</FormLabel>
                     <FormControl>
                       <Input type="number" {...field} />
                     </FormControl>
@@ -333,77 +320,22 @@ export default function InvoiceForm({ documentType = "invoice" }: InvoiceFormPro
             </CardContent>
           </Card>
 
-          {isProforma && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Supplier Info</CardTitle>
-              </CardHeader>
-              <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <FormField
-                  control={form.control}
-                  name="supplierId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Supplier</FormLabel>
-                      <Select
-                        onValueChange={(val) => field.onChange(Number(val))}
-                        value={field.value ? String(field.value) : undefined}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a supplier" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {suppliers?.map((supplier) => (
-                            <SelectItem key={supplier.id} value={String(supplier.id)}>
-                              {supplier.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
-          )}
-
           <Card>
             <CardHeader>
               <CardTitle>Additional Details (Optional)</CardTitle>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <FormField control={form.control} name="workSite" render={({ field }) => (
-                <FormItem><FormLabel>Work Site</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>
+            <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <FormField control={form.control} name="deliveryLocation" render={({ field }) => (
+                <FormItem><FormLabel>Delivery Location</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>
               )} />
-              <FormField control={form.control} name="deliveryNote" render={({ field }) => (
-                <FormItem><FormLabel>Delivery Note</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>
+              <FormField control={form.control} name="termsOfDelivery" render={({ field }) => (
+                <FormItem><FormLabel>Terms of Delivery</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>
               )} />
               <FormField control={form.control} name="modeOfPayment" render={({ field }) => (
                 <FormItem><FormLabel>Mode/Terms of Payment</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>
               )} />
-              <FormField control={form.control} name="suppliersRef" render={({ field }) => (
-                <FormItem><FormLabel>Supplier's Ref</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>
-              )} />
-              <FormField control={form.control} name="buyersOrderNo" render={({ field }) => (
-                <FormItem><FormLabel>Buyer's Order No.</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>
-              )} />
-              <FormField control={form.control} name="buyersOrderDate" render={({ field }) => (
-                <FormItem><FormLabel>Buyer's Order Date</FormLabel><FormControl><Input type="date" {...field} /></FormControl></FormItem>
-              )} />
-              <FormField control={form.control} name="despatchDocNo" render={({ field }) => (
-                <FormItem><FormLabel>Despatch Doc No.</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>
-              )} />
-              <FormField control={form.control} name="despatchDocDate" render={({ field }) => (
-                <FormItem><FormLabel>Delivery Note Date</FormLabel><FormControl><Input type="date" {...field} /></FormControl></FormItem>
-              )} />
-              <FormField control={form.control} name="despatchedThrough" render={({ field }) => (
-                <FormItem><FormLabel>Despatched through</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>
-              )} />
-              <FormField control={form.control} name="destination" render={({ field }) => (
-                <FormItem><FormLabel>Destination</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>
+              <FormField control={form.control} name="notes" render={({ field }) => (
+                <FormItem className="md:col-span-3"><FormLabel>Notes</FormLabel><FormControl><Textarea className="resize-none" rows={3} {...field} /></FormControl></FormItem>
               )} />
             </CardContent>
           </Card>
@@ -415,22 +347,47 @@ export default function InvoiceForm({ documentType = "invoice" }: InvoiceFormPro
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => append({ sNo: fields.length + 1, description: "", hsnSac: "8537", qty: 1, rate: 0, per: "Nos", amount: 0 })}
+                onClick={() => append({ sNo: fields.length + 1, description: "", discountPct: 0, qty: 1, rate: 0, per: "Nos", amount: 0 })}
               >
                 <Plus className="w-4 h-4 mr-1" /> Add Row
               </Button>
             </CardHeader>
             <CardContent>
+              {watchClientId ? (
+                <div className="mb-4">
+                  <div className="text-sm font-medium mb-2">Select from Purchase Item Master</div>
+                  {!masterItems?.length ? (
+                    <p className="text-sm text-muted-foreground">No saved items for this client yet — items you add below will be saved here automatically.</p>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 max-h-64 overflow-y-auto border rounded-md p-3">
+                      {masterItems.map((entry) => {
+                        const checked = selectedDescriptions.has(entry.description.trim().toLowerCase())
+                        return (
+                          <label key={entry.id} className="flex items-start gap-2 text-sm cursor-pointer">
+                            <Checkbox checked={checked} onCheckedChange={() => toggleMasterItem(entry)} className="mt-0.5" />
+                            <span>
+                              {entry.description}
+                              {entry.rate != null && <span className="text-muted-foreground"> — {formatCurrency(entry.rate)}</span>}
+                            </span>
+                          </label>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground mb-4">Pick a client above to see their saved purchase items.</p>
+              )}
               <div className="overflow-x-auto">
                 <table className="w-full text-sm text-left">
                   <thead className="text-xs text-muted-foreground bg-muted/50 border-y">
                     <tr>
                       <th className="p-2 w-12 text-center">S.No</th>
                       <th className="p-2 min-w-[200px]">Description of Goods/Services</th>
-                      <th className="p-2 w-24">HSN/SAC</th>
                       <th className="p-2 w-24">Quantity</th>
                       <th className="p-2 w-32">Rate</th>
                       <th className="p-2 w-20">Per</th>
+                      <th className="p-2 w-24">Discount %</th>
                       <th className="p-2 w-32 text-right">Amount</th>
                       <th className="p-2 w-10"></th>
                     </tr>
@@ -445,9 +402,6 @@ export default function InvoiceForm({ documentType = "invoice" }: InvoiceFormPro
                           <Input className="h-8" {...form.register(`items.${index}.description`)} />
                         </td>
                         <td className="p-2">
-                          <Input className="h-8" {...form.register(`items.${index}.hsnSac`)} />
-                        </td>
-                        <td className="p-2">
                           <Input type="number" step="0.01" className="h-8" {...form.register(`items.${index}.qty`)} />
                         </td>
                         <td className="p-2">
@@ -455,6 +409,9 @@ export default function InvoiceForm({ documentType = "invoice" }: InvoiceFormPro
                         </td>
                         <td className="p-2">
                           <Input className="h-8" {...form.register(`items.${index}.per`)} />
+                        </td>
+                        <td className="p-2">
+                          <Input type="number" step="0.01" className="h-8" {...form.register(`items.${index}.discountPct`)} />
                         </td>
                         <td className="p-2">
                           <Input type="number" step="0.01" className="h-8 text-right font-mono" {...form.register(`items.${index}.amount`)} />
@@ -536,11 +493,11 @@ export default function InvoiceForm({ documentType = "invoice" }: InvoiceFormPro
 
           <div className="flex justify-end gap-4">
             <Button type="button" variant="outline" asChild>
-              <Link href={basePath}>Cancel</Link>
+              <Link href="/purchase-orders">Cancel</Link>
             </Button>
             <Button type="submit" disabled={isPending}>
               <Save className="w-4 h-4 mr-2" />
-              {isPending ? "Saving..." : `Save ${docLabel}`}
+              {isPending ? "Saving..." : "Save Purchase Order"}
             </Button>
           </div>
         </form>

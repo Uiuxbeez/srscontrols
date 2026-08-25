@@ -1,13 +1,18 @@
-import { pgTable, serial, text, timestamp, integer, numeric, real } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, timestamp, integer, numeric, real, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { clientsTable } from "./clients";
+import { suppliersTable } from "./suppliers";
 
 export const invoicesTable = pgTable("invoices", {
   id: serial("id").primaryKey(),
-  invoiceNo: integer("invoice_no").notNull().unique(),
+  invoiceNo: integer("invoice_no").notNull(),
+  // "invoice" or "proforma" — same document shape, numbered in separate sequences (see the
+  // composite unique constraint below), and a Proforma additionally carries a Supplier block.
+  documentType: text("document_type").notNull().default("invoice"),
   date: text("date").notNull(),
   clientId: integer("client_id").notNull().references(() => clientsTable.id),
+  supplierId: integer("supplier_id").references(() => suppliersTable.id),
   workSite: text("work_site"),
   deliveryNote: text("delivery_note"),
   modeOfPayment: text("mode_of_payment"),
@@ -29,7 +34,9 @@ export const invoicesTable = pgTable("invoices", {
   netTotal: numeric("net_total", { precision: 12, scale: 2 }).notNull().default("0"),
   amountInWords: text("amount_in_words").notNull().default(""),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+}, (table) => [
+  unique().on(table.documentType, table.invoiceNo),
+]);
 
 export const invoiceItemsTable = pgTable("invoice_items", {
   id: serial("id").primaryKey(),

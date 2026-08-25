@@ -5,12 +5,16 @@
  * SRS Invoice Manager API
  * OpenAPI spec version: 0.1.0
  */
+import type { InvoiceInputDocumentType } from './invoiceInputDocumentType';
 import type { InvoiceItemInput } from './invoiceItemInput';
 
 export interface InvoiceInput {
   invoiceNo: number;
+  /** Defaults to "invoice" when omitted. */
+  documentType?: InvoiceInputDocumentType;
   date: string;
   clientId: number;
+  supplierId?: number;
   workSite?: string;
   deliveryNote?: string;
   modeOfPayment?: string;

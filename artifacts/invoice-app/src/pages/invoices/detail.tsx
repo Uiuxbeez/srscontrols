@@ -1,4 +1,4 @@
-import { useGetInvoice, useDeleteInvoice, getListInvoicesQueryKey } from "@workspace/api-client-react"
+import { useGetInvoice, useDeleteInvoice, getListInvoicesQueryKey, getGetInvoiceQueryKey } from "@workspace/api-client-react"
 import { useParams, useLocation, Link } from "wouter"
 import { useEffect, useState } from "react"
 import { useQueryClient } from "@tanstack/react-query"
@@ -70,7 +70,7 @@ export default function InvoiceDetail() {
   const queryClient = useQueryClient()
 
   const { data: invoice, isLoading } = useGetInvoice(id, {
-    query: { enabled: !!id },
+    query: { enabled: !!id, queryKey: getGetInvoiceQueryKey(id) },
   })
 
   const deleteInvoice = useDeleteInvoice()
@@ -80,21 +80,26 @@ export default function InvoiceDetail() {
     return params.get("duplicateCopy") === "1" || params.get("copyType") === "duplicate"
   })()
 
+  const isProforma = invoice?.documentType === "proforma"
+  const basePath = isProforma ? "/proforma-invoices" : "/invoices"
+  const numberPrefix = isProforma ? "PRO-" : "INV-"
+  const docLabel = isProforma ? "Proforma Invoice" : "Invoice"
+
   const handleDelete = () => {
     deleteInvoice.mutate({ id }, {
       onSuccess: () => {
-        toast({ title: "Invoice deleted successfully" })
-        queryClient.invalidateQueries({ queryKey: getListInvoicesQueryKey() })
-        setLocation("/invoices")
+        toast({ title: `${docLabel} deleted successfully` })
+        queryClient.invalidateQueries({ queryKey: getListInvoicesQueryKey({ documentType: invoice?.documentType as "invoice" | "proforma" }) })
+        setLocation(basePath)
       },
       onError: () => {
-        toast({ title: "Failed to delete invoice", variant: "destructive" })
+        toast({ title: `Failed to delete ${docLabel.toLowerCase()}`, variant: "destructive" })
       },
     })
   }
 
   const handleDuplicatePrint = () => {
-    window.location.href = `/invoices/${id}?print=1&duplicateCopy=1`
+    window.location.href = `${basePath}/${id}?print=1&duplicateCopy=1`
   }
 
   useEffect(() => {
@@ -141,10 +146,10 @@ export default function InvoiceDetail() {
       <div className="flex items-center justify-between print:hidden">
         <div className="flex items-center gap-4">
           <Button variant="outline" size="icon" asChild>
-            <Link href="/invoices"><ArrowLeft className="h-4 w-4" /></Link>
+            <Link href={basePath}><ArrowLeft className="h-4 w-4" /></Link>
           </Button>
           <h1 className="text-2xl font-bold tracking-tight">
-            Invoice INV-{invoice.invoiceNo}
+            {docLabel} {numberPrefix}{invoice.invoiceNo}
           </h1>
         </div>
         <div className="flex items-center gap-2">
@@ -156,9 +161,9 @@ export default function InvoiceDetail() {
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Delete Invoice?</AlertDialogTitle>
+                <AlertDialogTitle>Delete {docLabel}?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This will permanently delete this invoice. This action cannot be undone.
+                  This will permanently delete this {docLabel.toLowerCase()}. This action cannot be undone.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -170,7 +175,7 @@ export default function InvoiceDetail() {
             </AlertDialogContent>
           </AlertDialog>
           <Button variant="outline" asChild>
-            <Link href={`/invoices/${id}/edit`}><Edit className="w-4 h-4 mr-2" /> Edit</Link>
+            <Link href={`${basePath}/${id}/edit`}><Edit className="w-4 h-4 mr-2" /> Edit</Link>
           </Button>
           <Button variant="outline" onClick={handleDuplicatePrint}>
             Duplicate Copy
@@ -254,7 +259,7 @@ export default function InvoiceDetail() {
                 <div style={{ alignSelf: "flex-end", color: COL.value, fontSize: "12px", fontWeight: 800 }}>
                   {isDuplicateCopy ? "DUPLICATE COPY" : "(ORIGINAL FOR RECIPIENT)"}
                 </div>
-                <div style={{ color: COL.header, fontSize: "13px", fontWeight: 800 }}>Invoice</div>
+                <div style={{ color: COL.header, fontSize: "13px", fontWeight: 800 }}>{docLabel}</div>
                 <div style={{ border: `1.5px solid ${COL.header}`, padding: "7px", backgroundColor: "#fff" }}>
                   <QRCodeSVG
                     value={typeof window !== "undefined" ? `${window.location.origin}/api/invoices/${id}/pdf` : `/api/invoices/${id}/pdf`}
@@ -290,7 +295,7 @@ export default function InvoiceDetail() {
                 <div>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", border: `1px solid ${COL.border}`, borderRadius: "4px 4px 0 0", overflow: "hidden", backgroundColor: "#fff" }}>
                     {[
-                      ["Invoice No.", `INV-${invoice.invoiceNo}`],
+                      [`${docLabel} No.`, `${numberPrefix}${invoice.invoiceNo}`],
                       ["Delivery Note", invoice.deliveryNote || "-"],
                       ["Invoice Date", formatDate(invoice.date)],
                       ["Despatch Doc. No.", invoice.despatchDocNo || "-"],
@@ -325,6 +330,24 @@ export default function InvoiceDetail() {
               </div>
             </div>
           </div>
+
+          {/* ══ 2b. SUPPLIER INFO (Proforma only) ══ */}
+          {invoice.supplier && (
+            <div style={{ padding: "10px 10px 0px" }}>
+              <div style={{ border: `1px solid ${COL.border}`, borderRadius: "4px", overflow: "hidden", backgroundColor: "#fff" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "9px 14px", color: COL.label, fontSize: "13px", fontWeight: 800, textTransform: "uppercase", backgroundColor: COL.panelBg, borderBottom: `1px solid ${COL.softBorder}` }}>
+                  <UserRound size={16} /> Supplier Info
+                </div>
+                <div style={{ padding: "10px 14px", fontSize: "12.5px", lineHeight: 1.6 }}>
+                  <div style={{ fontWeight: 800, fontSize: "14px", marginBottom: "6px" }}>{invoice.supplier.name}</div>
+                  <div style={{ whiteSpace: "pre-wrap" }}>{invoice.supplier.address}</div>
+                  {invoice.supplier.phone && <div>M. {invoice.supplier.phone}</div>}
+                  {invoice.supplier.email && <div>{invoice.supplier.email}</div>}
+                  {invoice.supplier.gstin && <div style={{ fontWeight: 700 }}>GST No. : {invoice.supplier.gstin}</div>}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* ══ 3. LINE ITEMS TABLE ══ */}
           <table style={{ width: "calc(100% - 20px)", margin: "8px 10px 0", borderCollapse: "separate", borderSpacing: 0, border: `1px solid ${COL.border}`, borderRadius: "4px", overflow: "hidden" }}>

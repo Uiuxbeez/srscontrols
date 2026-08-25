@@ -12,9 +12,19 @@ import { useAuthMe } from '@/lib/auth-api';
 import Dashboard from '@/pages/dashboard';
 import ClientsList from '@/pages/clients/list';
 import ClientForm from '@/pages/clients/form';
+import SuppliersList from '@/pages/suppliers/list';
+import SupplierForm from '@/pages/suppliers/form';
 import InvoicesList from '@/pages/invoices/list';
 import InvoiceForm from '@/pages/invoices/form';
 import InvoiceDetail from '@/pages/invoices/detail';
+import ProformaInvoicesList from '@/pages/proforma-invoices/list';
+import ProformaInvoiceForm from '@/pages/proforma-invoices/form';
+import ProformaInvoiceDetail from '@/pages/proforma-invoices/detail';
+import PurchaseOrdersList from '@/pages/purchase-orders/list';
+import PurchaseOrderForm from '@/pages/purchase-orders/form';
+import PurchaseOrderDetail from '@/pages/purchase-orders/detail';
+import PurchaseItemMasterList from '@/pages/purchase-item-master/list';
+import PurchaseItemMasterForm from '@/pages/purchase-item-master/form';
 import QuotationsList from '@/pages/quotations/list';
 import QuotationForm from '@/pages/quotations/form';
 import QuotationDetail from '@/pages/quotations/detail';
@@ -46,12 +56,34 @@ function Router() {
         <Route path="/clients" component={ClientsList} />
         <Route path="/clients/new" component={ClientForm} />
         <Route path="/clients/:id/edit" component={ClientForm} />
-        
+
+        {/* Suppliers */}
+        <Route path="/suppliers" component={SuppliersList} />
+        <Route path="/suppliers/new" component={SupplierForm} />
+        <Route path="/suppliers/:id/edit" component={SupplierForm} />
+
         {/* Invoices */}
-        <Route path="/invoices" component={InvoicesList} />
-        <Route path="/invoices/new" component={InvoiceForm} />
+        <Route path="/invoices">{() => <InvoicesList />}</Route>
+        <Route path="/invoices/new">{() => <InvoiceForm />}</Route>
         <Route path="/invoices/:id" component={InvoiceDetail} />
-        <Route path="/invoices/:id/edit" component={InvoiceForm} />
+        <Route path="/invoices/:id/edit">{() => <InvoiceForm />}</Route>
+
+        {/* Proforma Invoices */}
+        <Route path="/proforma-invoices" component={ProformaInvoicesList} />
+        <Route path="/proforma-invoices/new" component={ProformaInvoiceForm} />
+        <Route path="/proforma-invoices/:id" component={ProformaInvoiceDetail} />
+        <Route path="/proforma-invoices/:id/edit" component={ProformaInvoiceForm} />
+
+        {/* Purchase Orders */}
+        <Route path="/purchase-orders" component={PurchaseOrdersList} />
+        <Route path="/purchase-orders/new" component={PurchaseOrderForm} />
+        <Route path="/purchase-orders/:id" component={PurchaseOrderDetail} />
+        <Route path="/purchase-orders/:id/edit" component={PurchaseOrderForm} />
+
+        {/* Purchase Item Master */}
+        <Route path="/purchase-item-master" component={PurchaseItemMasterList} />
+        <Route path="/purchase-item-master/new" component={PurchaseItemMasterForm} />
+        <Route path="/purchase-item-master/:id/edit" component={PurchaseItemMasterForm} />
 
         {/* Quotations */}
         <Route path="/quotations" component={QuotationsList} />

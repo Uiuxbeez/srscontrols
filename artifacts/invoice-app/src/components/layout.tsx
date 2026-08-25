@@ -3,14 +3,18 @@ import { Link, useLocation } from "wouter"
 import {
   LayoutDashboard,
   FileText,
+  FileSignature,
   Users,
+  Building2,
   ClipboardList,
+  ShoppingCart,
   Box,
   ListChecks,
   Layers,
   ChevronDown,
   Package,
   LogOut,
+  ClipboardCheck,
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -25,8 +29,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const navItems = [
     { label: "Dashboard", href: "/", icon: LayoutDashboard },
     { label: "Invoices", href: "/invoices", icon: FileText },
+    { label: "Proforma Invoice", href: "/proforma-invoices", icon: FileSignature },
+    { label: "Purchase Order", href: "/purchase-orders", icon: ShoppingCart },
+    { label: "Purchase Item Master", href: "/purchase-item-master", icon: ClipboardCheck },
     { label: "Quotations", href: "/quotations", icon: ClipboardList },
     { label: "Clients", href: "/clients", icon: Users },
+    { label: "Suppliers", href: "/suppliers", icon: Building2 },
     { label: "Item Master", href: "/item-master", icon: Package },
   ];
 

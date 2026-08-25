@@ -49,6 +49,38 @@ export interface ClientUpdate {
   email?: string;
 }
 
+export interface Supplier {
+  id: number;
+  name: string;
+  address: string;
+  /** @nullable */
+  gstin?: string | null;
+  /** @nullable */
+  phone?: string | null;
+  /** @nullable */
+  email?: string | null;
+  createdAt?: string;
+}
+
+export interface SupplierInput {
+  /** @minLength 1 */
+  name: string;
+  /** @minLength 1 */
+  address: string;
+  gstin?: string;
+  phone?: string;
+  email?: string;
+}
+
+export interface SupplierUpdate {
+  /** @minLength 1 */
+  name?: string;
+  address?: string;
+  gstin?: string;
+  phone?: string;
+  email?: string;
+}
+
 export type PanelCategory = typeof PanelCategory[keyof typeof PanelCategory];
 
 
@@ -243,12 +275,24 @@ export interface InvoiceItemInput {
   amount: number;
 }
 
+export type InvoiceDocumentType = typeof InvoiceDocumentType[keyof typeof InvoiceDocumentType];
+
+
+export const InvoiceDocumentType = {
+  invoice: 'invoice',
+  proforma: 'proforma',
+} as const;
+
 export interface Invoice {
   id: number;
   invoiceNo: number;
+  documentType: InvoiceDocumentType;
   date: string;
   clientId: number;
   client: Client;
+  /** @nullable */
+  supplierId?: number | null;
+  supplier?: Supplier | null;
   /** @nullable */
   workSite?: string | null;
   /** @nullable */
@@ -285,10 +329,24 @@ export interface Invoice {
   createdAt: string;
 }
 
+/**
+ * Defaults to "invoice" when omitted.
+ */
+export type InvoiceInputDocumentType = typeof InvoiceInputDocumentType[keyof typeof InvoiceInputDocumentType];
+
+
+export const InvoiceInputDocumentType = {
+  invoice: 'invoice',
+  proforma: 'proforma',
+} as const;
+
 export interface InvoiceInput {
   invoiceNo: number;
+  /** Defaults to "invoice" when omitted. */
+  documentType?: InvoiceInputDocumentType;
   date: string;
   clientId: number;
+  supplierId?: number;
   workSite?: string;
   deliveryNote?: string;
   modeOfPayment?: string;
@@ -309,6 +367,7 @@ export interface InvoiceInput {
 export interface InvoiceUpdate {
   date?: string;
   clientId?: number;
+  supplierId?: number;
   workSite?: string;
   deliveryNote?: string;
   modeOfPayment?: string;
@@ -345,10 +404,153 @@ export interface InvoiceStats {
   thisMonthCount: number;
   lastMonthRevenue: number;
   lastMonthCount: number;
+  /** Sum of taxable value (subtotal) across this month's invoices. */
+  thisMonthSubtotal: number;
+  /** Sum of CGST collected this month (intra-state invoices only). */
+  thisMonthCgst: number;
+  /** Sum of SGST collected this month (intra-state invoices only). */
+  thisMonthSgst: number;
+  /** Sum of IGST collected this month (inter-state invoices only). */
+  thisMonthIgst: number;
+  /** thisMonthCgst + thisMonthSgst + thisMonthIgst. */
+  thisMonthTax: number;
 }
 
 export interface NextInvoiceNumber {
   nextNumber: number;
+}
+
+export interface PurchaseOrderItem {
+  id: number;
+  purchaseOrderId: number;
+  sNo: number;
+  description: string;
+  /** @nullable */
+  discountPct?: number | null;
+  /** @nullable */
+  qty?: number | null;
+  /** @nullable */
+  rate?: number | null;
+  /** @nullable */
+  per?: string | null;
+  amount: number;
+}
+
+export interface PurchaseOrderItemInput {
+  sNo: number;
+  /** @minLength 1 */
+  description: string;
+  discountPct?: number;
+  qty?: number;
+  rate?: number;
+  per?: string;
+  amount: number;
+}
+
+export interface PurchaseOrder {
+  id: number;
+  poNo: number;
+  date: string;
+  clientId: number;
+  client: Client;
+  /** @nullable */
+  deliveryLocation?: string | null;
+  /** @nullable */
+  termsOfDelivery?: string | null;
+  /** @nullable */
+  modeOfPayment?: string | null;
+  /** @nullable */
+  notes?: string | null;
+  items: PurchaseOrderItem[];
+  subtotal: number;
+  cgstRate: number;
+  sgstRate: number;
+  cgstAmount: number;
+  sgstAmount: number;
+  roundOff: number;
+  netTotal: number;
+  amountInWords: string;
+  createdAt: string;
+}
+
+export interface PurchaseOrderInput {
+  poNo: number;
+  date: string;
+  clientId: number;
+  deliveryLocation?: string;
+  termsOfDelivery?: string;
+  modeOfPayment?: string;
+  notes?: string;
+  items: PurchaseOrderItemInput[];
+  cgstRate: number;
+  sgstRate: number;
+}
+
+export interface PurchaseOrderUpdate {
+  date?: string;
+  clientId?: number;
+  deliveryLocation?: string;
+  termsOfDelivery?: string;
+  modeOfPayment?: string;
+  notes?: string;
+  items?: PurchaseOrderItemInput[];
+  cgstRate?: number;
+  sgstRate?: number;
+}
+
+export interface PurchaseOrderSummary {
+  id: number;
+  poNo: number;
+  date: string;
+  clientId: number;
+  clientName: string;
+  netTotal: number;
+  createdAt: string;
+}
+
+export interface NextPurchaseOrderNumber {
+  nextNumber: number;
+}
+
+export interface PurchaseItemMaster {
+  id: number;
+  clientId: number;
+  description: string;
+  /** @nullable */
+  rate?: number | null;
+  /** @nullable */
+  per?: string | null;
+  /** @nullable */
+  discountPct?: number | null;
+  createdAt: string;
+}
+
+export interface PurchaseItemMasterInput {
+  clientId: number;
+  /** @minLength 1 */
+  description: string;
+  /** @minimum 0 */
+  rate?: number;
+  per?: string;
+  /**
+     * @minimum 0
+     * @maximum 100
+     */
+  discountPct?: number;
+}
+
+export interface PurchaseItemMasterUpdate {
+  clientId?: number;
+  /** @minLength 1 */
+  description?: string;
+  /** @minimum 0 */
+  rate?: number;
+  per?: string;
+  /**
+     * @minimum 0
+     * @maximum 100
+     */
+  discountPct?: number;
 }
 
 export type ListSubCategoriesParams = {
@@ -359,8 +561,44 @@ export type ListItemsParams = {
 subCategoryId?: number;
 };
 
+export type GetNextInvoiceNumberParams = {
+/**
+ * Numbering is scoped per document type — invoice and proforma each have their own sequence.
+ */
+documentType?: GetNextInvoiceNumberDocumentType;
+};
+
+export type GetNextInvoiceNumberDocumentType = typeof GetNextInvoiceNumberDocumentType[keyof typeof GetNextInvoiceNumberDocumentType];
+
+
+export const GetNextInvoiceNumberDocumentType = {
+  invoice: 'invoice',
+  proforma: 'proforma',
+} as const;
+
 export type ListInvoicesParams = {
 clientId?: number;
 search?: string;
+/**
+ * Defaults to "invoice" when omitted.
+ */
+documentType?: ListInvoicesDocumentType;
+};
+
+export type ListInvoicesDocumentType = typeof ListInvoicesDocumentType[keyof typeof ListInvoicesDocumentType];
+
+
+export const ListInvoicesDocumentType = {
+  invoice: 'invoice',
+  proforma: 'proforma',
+} as const;
+
+export type ListPurchaseOrdersParams = {
+clientId?: number;
+search?: string;
+};
+
+export type ListPurchaseItemMasterParams = {
+clientId?: number;
 };
 

@@ -2,7 +2,7 @@ import { useGetInvoiceStats, useGetRecentInvoices } from "@workspace/api-client-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatCurrency, formatDate } from "@/lib/utils"
-import { ArrowUpRight, ArrowDownRight, IndianRupee, FileText, Plus } from "lucide-react"
+import { ArrowUpRight, ArrowDownRight, IndianRupee, FileText, Plus, ReceiptText } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Link } from "wouter"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -83,6 +83,42 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <ReceiptText className="h-4 w-4 text-muted-foreground" /> Tax Analysis
+            </CardTitle>
+            <p className="text-sm text-muted-foreground mt-1">
+              {new Date().toLocaleDateString("en-IN", { month: "long", year: "numeric" })} — totals across this month's invoices.
+            </p>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {statsLoading ? (
+            <Skeleton className="h-16 w-full" />
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+              {[
+                ["Taxable Value", stats?.thisMonthSubtotal || 0],
+                ["CGST", stats?.thisMonthCgst || 0],
+                ["SGST", stats?.thisMonthSgst || 0],
+                ["IGST", stats?.thisMonthIgst || 0],
+                ["Total Tax", stats?.thisMonthTax || 0],
+                ["Grand Total", stats?.thisMonthRevenue || 0],
+              ].map(([label, value]) => (
+                <div key={label as string}>
+                  <div className="text-xs text-muted-foreground">{label}</div>
+                  <div className={`font-mono font-semibold ${label === "Grand Total" ? "text-primary text-lg" : ""}`}>
+                    {formatCurrency(value as number)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">

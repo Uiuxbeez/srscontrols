@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react"
-import { useListInvoices, useDeleteInvoice, getListInvoicesQueryKey } from "@workspace/api-client-react"
+import { useListPurchaseOrders, useDeletePurchaseOrder, getListPurchaseOrdersQueryKey } from "@workspace/api-client-react"
 import { useQueryClient } from "@tanstack/react-query"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Plus, Search, FileText, Trash2, ExternalLink } from "lucide-react"
+import { Plus, Search, ClipboardList, Trash2, ExternalLink } from "lucide-react"
 import { Link } from "wouter"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatCurrency, formatDate } from "@/lib/utils"
@@ -22,17 +22,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
-interface InvoicesListProps {
-  documentType?: "invoice" | "proforma"
-}
-
-export default function InvoicesList({ documentType = "invoice" }: InvoicesListProps) {
-  const isProforma = documentType === "proforma"
-  const basePath = isProforma ? "/proforma-invoices" : "/invoices"
-  const numberPrefix = isProforma ? "PRO-" : "INV-"
-  const docLabel = isProforma ? "Proforma Invoice" : "Invoice"
-  const docLabelPlural = isProforma ? "Proforma Invoices" : "Invoices"
-
+export default function PurchaseOrdersList() {
   const [search, setSearch] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
   const { toast } = useToast()
@@ -43,18 +33,17 @@ export default function InvoicesList({ documentType = "invoice" }: InvoicesListP
     return () => clearTimeout(timer)
   }, [search])
 
-  const listParams = { search: debouncedSearch || undefined, documentType }
-  const { data: invoices, isLoading } = useListInvoices(listParams)
-  const deleteInvoice = useDeleteInvoice()
+  const { data: purchaseOrders, isLoading } = useListPurchaseOrders({ search: debouncedSearch || undefined })
+  const deletePurchaseOrder = useDeletePurchaseOrder()
 
   const handleDelete = (id: number) => {
-    deleteInvoice.mutate({ id }, {
+    deletePurchaseOrder.mutate({ id }, {
       onSuccess: () => {
-        toast({ title: `${docLabel} deleted successfully` })
-        queryClient.invalidateQueries({ queryKey: getListInvoicesQueryKey(listParams) })
+        toast({ title: "Purchase order deleted successfully" })
+        queryClient.invalidateQueries({ queryKey: getListPurchaseOrdersQueryKey() })
       },
       onError: () => {
-        toast({ title: `Failed to delete ${docLabel.toLowerCase()}`, variant: "destructive" })
+        toast({ title: "Failed to delete purchase order", variant: "destructive" })
       }
     })
   }
@@ -63,11 +52,11 @@ export default function InvoicesList({ documentType = "invoice" }: InvoicesListP
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{docLabelPlural}</h1>
-          <p className="text-muted-foreground">Manage and track your {docLabelPlural.toLowerCase()}.</p>
+          <h1 className="text-2xl font-bold tracking-tight">Purchase Orders</h1>
+          <p className="text-muted-foreground">Manage and track your purchase orders.</p>
         </div>
-        <Link href={`${basePath}/new`} className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2">
-          <Plus className="mr-2 w-4 h-4" /> New {docLabel}
+        <Link href="/purchase-orders/new" className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2">
+          <Plus className="mr-2 w-4 h-4" /> New Purchase Order
         </Link>
       </div>
 
@@ -76,7 +65,7 @@ export default function InvoicesList({ documentType = "invoice" }: InvoicesListP
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder={`Search by ${docLabel.toLowerCase()} number or client...`}
+              placeholder="Search by PO number or client..."
               className="pl-9"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -90,16 +79,16 @@ export default function InvoicesList({ documentType = "invoice" }: InvoicesListP
               <Skeleton className="h-10 w-full" />
               <Skeleton className="h-10 w-full" />
             </div>
-          ) : !invoices?.length ? (
+          ) : !purchaseOrders?.length ? (
             <div className="text-center py-12">
-              <FileText className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-foreground">No {docLabelPlural.toLowerCase()} found</h3>
+              <ClipboardList className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-foreground">No purchase orders found</h3>
               <p className="text-muted-foreground mt-1 mb-4">
-                {search ? `No ${docLabelPlural.toLowerCase()} match your search.` : `Create your first ${docLabel.toLowerCase()} to get started.`}
+                {search ? "No purchase orders match your search." : "Create your first purchase order to get started."}
               </p>
               {!search && (
                 <Button asChild>
-                  <Link href={`${basePath}/new`}>Create {docLabel}</Link>
+                  <Link href="/purchase-orders/new">Create Purchase Order</Link>
                 </Button>
               )}
             </div>
@@ -107,30 +96,26 @@ export default function InvoicesList({ documentType = "invoice" }: InvoicesListP
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>{docLabel} No</TableHead>
+                  <TableHead>PO No</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Client</TableHead>
-                  <TableHead>Site/Ref</TableHead>
                   <TableHead className="text-right">Amount</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {invoices.map((inv) => (
-                  <TableRow key={inv.id}>
+                {purchaseOrders.map((po) => (
+                  <TableRow key={po.id}>
                     <TableCell className="font-medium">
-                      <Link href={`${basePath}/${inv.id}`} className="hover:underline text-primary flex items-center gap-1">
-                        {numberPrefix}{inv.invoiceNo}
+                      <Link href={`/purchase-orders/${po.id}`} className="hover:underline text-primary flex items-center gap-1">
+                        PO-{po.poNo}
                         <ExternalLink className="h-3 w-3" />
                       </Link>
                     </TableCell>
-                    <TableCell>{formatDate(inv.date)}</TableCell>
-                    <TableCell>{inv.clientName}</TableCell>
-                    <TableCell className="text-muted-foreground max-w-[200px] truncate">
-                      {inv.workSite || "—"}
-                    </TableCell>
+                    <TableCell>{formatDate(po.date)}</TableCell>
+                    <TableCell>{po.clientName}</TableCell>
                     <TableCell className="text-right font-mono font-medium">
-                      {formatCurrency(inv.netTotal)}
+                      {formatCurrency(po.netTotal)}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
@@ -142,14 +127,14 @@ export default function InvoicesList({ documentType = "invoice" }: InvoicesListP
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
-                              <AlertDialogTitle>Delete {docLabel}?</AlertDialogTitle>
+                              <AlertDialogTitle>Delete Purchase Order?</AlertDialogTitle>
                               <AlertDialogDescription>
-                                This will permanently delete {docLabel.toLowerCase()} {numberPrefix}{inv.invoiceNo}. This action cannot be undone.
+                                This will permanently delete purchase order PO-{po.poNo}. This action cannot be undone.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDelete(inv.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                              <AlertDialogAction onClick={() => handleDelete(po.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
                                 Delete
                               </AlertDialogAction>
                             </AlertDialogFooter>

@@ -10,6 +10,7 @@ import type { InvoiceItemInput } from './invoiceItemInput';
 export interface InvoiceUpdate {
   date?: string;
   clientId?: number;
+  supplierId?: number;
   workSite?: string;
   deliveryNote?: string;
   modeOfPayment?: string;

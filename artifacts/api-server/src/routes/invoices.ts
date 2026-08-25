@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
-import { eq, desc, sql, and, like, or } from "drizzle-orm";
-import { db, clientsTable, invoicesTable, invoiceItemsTable } from "@workspace/db";
+import { eq, desc, sql, and, like, or, gte, lt, type SQL } from "drizzle-orm";
+import { db, clientsTable, suppliersTable, invoicesTable, invoiceItemsTable } from "@workspace/db";
 import {
   CreateInvoiceBody,
   UpdateInvoiceBody,
@@ -32,7 +32,8 @@ router.get("/invoices/:id/pdf", async (req, res): Promise<void> => {
     // lazily import puppeteer to avoid startup cost when not used
     const puppeteer = await import("puppeteer")
     const FRONTEND_BASE = process.env.FRONTEND_BASE_URL || "http://localhost:5173"
-    const target = `${FRONTEND_BASE.replace(/\/$/, "")}/invoices/${id}?pdfRender=1`
+    const routeBase = invoice.documentType === "proforma" ? "proforma-invoices" : "invoices"
+    const target = `${FRONTEND_BASE.replace(/\/$/, "")}/${routeBase}/${id}?pdfRender=1`
 
     const browser = await puppeteer.launch({ args: ["--no-sandbox", "--disable-setuid-sandbox"] })
     const page = await browser.newPage()
@@ -59,19 +60,29 @@ router.get("/invoices/:id/pdf", async (req, res): Promise<void> => {
   }
 })
 
+// SRS Controls' own GST state-code prefix (Tamil Nadu) — mirrors artifacts/invoice-app/src/lib/gst.ts.
+// A client GSTIN starting with anything else means that invoice's tax is IGST, not CGST+SGST.
+const HOME_STATE_CODE = "33";
+
 // GET /invoices/stats
 router.get("/invoices/stats", async (req, res): Promise<void> => {
   const now = new Date();
   const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+  const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString().slice(0, 10);
   const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().slice(0, 10);
   const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().slice(0, 10);
+
+  // Proforma invoices are pre-sale documents, not actual revenue — every query here is
+  // scoped to real Invoices only so Dashboard numbers stay accurate.
+  const isRealInvoice = eq(invoicesTable.documentType, "invoice");
 
   const [totalRow] = await db
     .select({
       totalInvoices: sql<number>`count(*)::int`,
       totalRevenue: sql<number>`coalesce(sum(net_total::numeric), 0)::float`,
     })
-    .from(invoicesTable);
+    .from(invoicesTable)
+    .where(isRealInvoice);
 
   const [thisMonthRow] = await db
     .select({
@@ -79,7 +90,7 @@ router.get("/invoices/stats", async (req, res): Promise<void> => {
       thisMonthCount: sql<number>`count(*)::int`,
     })
     .from(invoicesTable)
-    .where(sql`date >= ${thisMonthStart}`);
+    .where(and(isRealInvoice, sql`date >= ${thisMonthStart}`));
 
   const [lastMonthRow] = await db
     .select({
@@ -87,7 +98,18 @@ router.get("/invoices/stats", async (req, res): Promise<void> => {
       lastMonthCount: sql<number>`count(*)::int`,
     })
     .from(invoicesTable)
-    .where(sql`date >= ${lastMonthStart} and date <= ${lastMonthEnd}`);
+    .where(and(isRealInvoice, sql`date >= ${lastMonthStart} and date <= ${lastMonthEnd}`));
+
+  const [taxRow] = await db
+    .select({
+      subtotal: sql<number>`coalesce(sum(${invoicesTable.subtotal}::numeric), 0)::float`,
+      cgst: sql<number>`coalesce(sum(case when ${clientsTable.gstin} is null or left(${clientsTable.gstin}, 2) = ${HOME_STATE_CODE} then ${invoicesTable.cgstAmount}::numeric else 0 end), 0)::float`,
+      sgst: sql<number>`coalesce(sum(case when ${clientsTable.gstin} is null or left(${clientsTable.gstin}, 2) = ${HOME_STATE_CODE} then ${invoicesTable.sgstAmount}::numeric else 0 end), 0)::float`,
+      igst: sql<number>`coalesce(sum(case when ${clientsTable.gstin} is not null and left(${clientsTable.gstin}, 2) != ${HOME_STATE_CODE} then (${invoicesTable.cgstAmount}::numeric + ${invoicesTable.sgstAmount}::numeric) else 0 end), 0)::float`,
+    })
+    .from(invoicesTable)
+    .leftJoin(clientsTable, eq(invoicesTable.clientId, clientsTable.id))
+    .where(and(isRealInvoice, gte(invoicesTable.date, thisMonthStart), lt(invoicesTable.date, nextMonthStart)));
 
   res.json({
     totalInvoices: totalRow?.totalInvoices ?? 0,
@@ -96,6 +118,11 @@ router.get("/invoices/stats", async (req, res): Promise<void> => {
     thisMonthCount: thisMonthRow?.thisMonthCount ?? 0,
     lastMonthRevenue: lastMonthRow?.lastMonthRevenue ?? 0,
     lastMonthCount: lastMonthRow?.lastMonthCount ?? 0,
+    thisMonthSubtotal: taxRow?.subtotal ?? 0,
+    thisMonthCgst: taxRow?.cgst ?? 0,
+    thisMonthSgst: taxRow?.sgst ?? 0,
+    thisMonthIgst: taxRow?.igst ?? 0,
+    thisMonthTax: (taxRow?.cgst ?? 0) + (taxRow?.sgst ?? 0) + (taxRow?.igst ?? 0),
   });
 });
 
@@ -114,6 +141,7 @@ router.get("/invoices/recent", async (req, res): Promise<void> => {
     })
     .from(invoicesTable)
     .leftJoin(clientsTable, eq(invoicesTable.clientId, clientsTable.id))
+    .where(eq(invoicesTable.documentType, "invoice"))
     .orderBy(desc(invoicesTable.createdAt))
     .limit(5);
 
@@ -128,9 +156,11 @@ router.get("/invoices/recent", async (req, res): Promise<void> => {
 
 // GET /invoices/next-number
 router.get("/invoices/next-number", async (req, res): Promise<void> => {
+  const documentType = req.query["documentType"] === "proforma" ? "proforma" : "invoice";
   const [row] = await db
     .select({ maxNo: sql<number>`coalesce(max(invoice_no), 0)::int` })
-    .from(invoicesTable);
+    .from(invoicesTable)
+    .where(eq(invoicesTable.documentType, documentType));
   res.json({ nextNumber: (row?.maxNo ?? 0) + 1 });
 });
 
@@ -141,9 +171,9 @@ router.get("/invoices", async (req, res): Promise<void> => {
     res.status(400).json({ error: queryParsed.error.message });
     return;
   }
-  const { clientId, search } = queryParsed.data;
+  const { clientId, search, documentType } = queryParsed.data;
 
-  const conditions = [];
+  const conditions: (SQL | undefined)[] = [eq(invoicesTable.documentType, documentType === "proforma" ? "proforma" : "invoice")];
   if (clientId) conditions.push(eq(invoicesTable.clientId, clientId));
   if (search) {
     conditions.push(
@@ -319,6 +349,9 @@ async function fetchFullInvoice(id: number) {
   if (!invoice) return null;
 
   const [client] = await db.select().from(clientsTable).where(eq(clientsTable.id, invoice.clientId));
+  const [supplier] = invoice.supplierId
+    ? await db.select().from(suppliersTable).where(eq(suppliersTable.id, invoice.supplierId))
+    : [];
   const items = await db
     .select()
     .from(invoiceItemsTable)
@@ -335,6 +368,7 @@ async function fetchFullInvoice(id: number) {
     roundOff: Number(invoice.roundOff),
     netTotal: Number(invoice.netTotal),
     client: client ?? null,
+    supplier: supplier ?? null,
     items: items.map((item) => ({
       ...item,
       qty: item.qty != null ? Number(item.qty) : null,
